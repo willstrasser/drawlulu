@@ -1,13 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, prompts, users } from "@/lib/db/schema";
+import { games, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/fal";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ code: string }> }
+  { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
   const { userId: clerkId } = await auth();
@@ -17,23 +17,10 @@ export async function POST(
 
   const { roundId } = (await request.json()) as { roundId: string };
 
-  // Verify host
-  const [game] = await db
-    .select()
-    .from(games)
-    .where(eq(games.roomCode, code));
+  const [game] = await db.select().from(games).where(eq(games.roomCode, code));
 
   if (!game) {
     return NextResponse.json({ error: "Game not found" }, { status: 404 });
-  }
-
-  const [hostUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId));
-
-  if (!hostUser || hostUser.id !== game.hostId) {
-    return NextResponse.json({ error: "Only host can generate" }, { status: 403 });
   }
 
   // Get all prompts for this round
@@ -47,18 +34,19 @@ export async function POST(
     roundPrompts.map(async (p) => {
       if (!p.sanitizedPrompt) return null;
       const imageUrl = await generateImage(p.sanitizedPrompt);
-      await db
-        .update(prompts)
-        .set({ imageUrl })
-        .where(eq(prompts.id, p.id));
+      await db.update(prompts).set({ imageUrl }).where(eq(prompts.id, p.id));
       return { promptId: p.id, imageUrl };
-    })
+    }),
   );
 
   const generated = results
     .filter(
-      (r): r is PromiseFulfilledResult<{ promptId: string; imageUrl: string } | null> =>
-        r.status === "fulfilled" && r.value !== null
+      (
+        r,
+      ): r is PromiseFulfilledResult<{
+        promptId: string;
+        imageUrl: string;
+      } | null> => r.status === "fulfilled" && r.value !== null,
     )
     .map((r) => r.value!);
 

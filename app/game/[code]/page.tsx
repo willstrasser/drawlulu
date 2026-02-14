@@ -8,8 +8,6 @@ import {
   useMutation,
   useOthers,
   useSelf,
-  useBroadcastEvent,
-  useEventListener,
 } from "@/liveblocks.config";
 import type {
   GuessEntry,
@@ -24,7 +22,7 @@ import { GeneratingPhase } from "@/components/game/GeneratingPhase";
 import { GuessingPhase } from "@/components/game/GuessingPhase";
 import { Scoreboard } from "@/components/game/Scoreboard";
 
-type Assignment = {
+type MyAssignment = {
   promptId: string;
   targetWord: string;
   tabooWords: string[];
@@ -39,12 +37,12 @@ function GameRoom({ code }: { code: string }) {
   const roundId = useStorage((root) => root.roundId);
   const currentPromptIndex = useStorage((root) => root.currentPromptIndex);
   const prompts = useStorage((root) => root.prompts);
+  const timerEndsAt = useStorage((root) => root.timerEndsAt);
 
   const [myPresence, setMyPresence] = useMyPresence();
-  const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [hasSubmittedPrompt, setHasSubmittedPrompt] = useState(false);
-
-  const broadcastEvent = useBroadcastEvent();
+  const [myAssignment, setMyAssignment] = useState<MyAssignment | null>(null);
+  const [fetchingAssignment, setFetchingAssignment] = useState(false);
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
@@ -112,21 +110,28 @@ function GameRoom({ code }: { code: string }) {
     }
   }, [storageLoaded, self, hostId, setHostIdMutation]);
 
-  // Listen for events from other players
-  useEventListener(({ event }) => {
-    const e = event as { type: string; [key: string]: unknown };
-    if (e.type === "assignment") {
-      setAssignment(e.assignment as Assignment);
+  // Fetch my assignment when phase changes to "prompting"
+  useEffect(() => {
+    if (gamePhase === "prompting" && !myAssignment && !fetchingAssignment) {
+      setFetchingAssignment(true);
+      fetch(`/api/games/${code}/my-assignment`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.promptId) {
+            setMyAssignment(data);
+            setHasSubmittedPrompt(false);
+          }
+        })
+        .catch((e) => console.error("Failed to fetch assignment:", e))
+        .finally(() => setFetchingAssignment(false));
     }
-    if (e.type === "phase-change") {
-      // handled by storage
+    // Reset assignment when leaving prompting phase
+    if (gamePhase !== "prompting" && gamePhase !== "generating") {
+      setMyAssignment(null);
     }
-    if (e.type === "prompt-update") {
-      // Refresh prompts from storage
-    }
-  });
+  }, [gamePhase, code, myAssignment, fetchingAssignment]);
 
-  // Handle game start
+  // Handle game start (host only)
   const handleStart = async (playerClerkIds: string[]) => {
     const res = await fetch(`/api/games/${code}/start`, {
       method: "POST",
@@ -139,39 +144,10 @@ function GameRoom({ code }: { code: string }) {
     setRoundId(data.roundId);
     setGamePhase("prompting");
     setTimerEndsAt(Date.now() + 60000);
-    setHasSubmittedPrompt(false);
-
-    // Set own assignment
-    const myAssignment = data.assignments[self?.id as string];
-    if (myAssignment) {
-      setAssignment(myAssignment);
-    }
-
-    // Broadcast assignments to each player
-    // Each player will receive their own assignment via the event
-    broadcastEvent({
-      type: "assignments",
-      assignments: data.assignments,
-    } as unknown as Record<string, never>);
+    // Host's assignment will be fetched by the useEffect above
   };
 
-  // Listen for assignments broadcast
-  useEventListener(({ event }) => {
-    const e = event as {
-      type: string;
-      assignments?: Record<string, Assignment>;
-    };
-    if (e.type === "assignments" && e.assignments && self?.id) {
-      const myAssignment = e.assignments[self.id as string];
-      if (myAssignment) {
-        setAssignment(myAssignment);
-        setHasSubmittedPrompt(false);
-      }
-    }
-  });
-
   // Timer check for phase transitions (host only)
-  const timerEndsAt = useStorage((root) => root.timerEndsAt);
   const phaseTransitionRef = useRef(false);
 
   useEffect(() => {
@@ -195,42 +171,17 @@ function GameRoom({ code }: { code: string }) {
     phaseTransitionRef.current = true;
 
     if (gamePhase === "prompting") {
-      // Move to generating phase
       setGamePhase("generating");
       setTimerEndsAt(null);
 
-      // Trigger image generation
       try {
-        const res = await fetch(`/api/games/${code}/generate`, {
+        await fetch(`/api/games/${code}/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ roundId }),
         });
-        const data = await res.json();
 
-        // Build prompt entries for Liveblocks storage
-        const allPlayers = [
-          self,
-          ...others,
-        ];
-
-        const promptEntries: PromptEntry[] = (data.generated || []).map(
-          (g: { promptId: string; imageUrl: string }) => {
-            // Find the player who owns this prompt
-            // We need to look it up from our assignments
-            return {
-              promptId: g.promptId,
-              userId: "", // Will be populated from DB
-              username: "",
-              targetWord: "",
-              tabooWords: [],
-              imageUrl: g.imageUrl,
-              forbiddenWordsUsed: [],
-            };
-          }
-        );
-
-        // Fetch full prompt details
+        // Fetch full prompt details for the guessing phase
         const promptRes = await fetch(`/api/games/${code}/round-prompts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -249,15 +200,12 @@ function GameRoom({ code }: { code: string }) {
         console.error("Failed to generate images:", e);
       }
     } else if (gamePhase === "guessing") {
-      // Move to next image or scoreboard
       const nextIndex = (currentPromptIndex ?? 0) + 1;
       if (prompts && nextIndex < prompts.length) {
         setCurrentPromptIndex(nextIndex);
         clearGuesses();
         setTimerEndsAt(Date.now() + 30000);
-        setHasSubmittedPrompt(false);
       } else {
-        // Game over — fetch scores
         const scoresRes = await fetch(`/api/games/${code}/scores`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -275,22 +223,18 @@ function GameRoom({ code }: { code: string }) {
     phaseTransitionRef.current = false;
   }, [gamePhase, roundId, currentPromptIndex, prompts]);
 
-  // Handle guess submitted
   const handleGuessSubmitted = (guess: GuessEntry) => {
     addGuess(guess);
   };
 
-  // Handle play again
   const handlePlayAgain = async () => {
     const allClerkIds = [
       self?.id,
       ...others.map((o) => o.id),
     ].filter(Boolean) as string[];
-
     await handleStart(allClerkIds);
   };
 
-  // Handle prompt submitted
   const handlePromptSubmitted = () => {
     setHasSubmittedPrompt(true);
   };
@@ -333,15 +277,22 @@ function GameRoom({ code }: { code: string }) {
           />
         )}
 
-        {gamePhase === "prompting" && assignment && (
+        {gamePhase === "prompting" && myAssignment && (
           <PromptPhase
-            targetWord={assignment.targetWord}
-            tabooWords={assignment.tabooWords}
-            promptId={assignment.promptId}
+            targetWord={myAssignment.targetWord}
+            tabooWords={myAssignment.tabooWords}
+            promptId={myAssignment.promptId}
             roomCode={code}
             onSubmitted={handlePromptSubmitted}
             hasSubmitted={hasSubmittedPrompt}
           />
+        )}
+
+        {gamePhase === "prompting" && !myAssignment && (
+          <div className="text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-gray-400">Loading your assignment...</p>
+          </div>
         )}
 
         {gamePhase === "generating" && <GeneratingPhase />}

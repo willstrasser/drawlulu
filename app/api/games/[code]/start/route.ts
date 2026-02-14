@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, rounds, prompts, users } from "@/lib/db/schema";
+import { games, rounds, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getRandomWords } from "@/lib/words";
+import { ensureUser } from "@/lib/ensure-user";
 
 export async function POST(
   request: Request,
@@ -25,12 +26,8 @@ export async function POST(
   }
 
   // Verify caller is host
-  const [hostUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId));
-
-  if (!hostUser || hostUser.id !== game.hostId) {
+  const hostUser = await ensureUser(clerkId);
+  if (hostUser.id !== game.hostId) {
     return NextResponse.json({ error: "Only host can start" }, { status: 403 });
   }
 
@@ -46,15 +43,10 @@ export async function POST(
     );
   }
 
-  // Get DB users for all players
+  // Ensure all players exist in DB
   const playerUsers = await Promise.all(
-    playerClerkIds.map(async (cid) => {
-      const [u] = await db.select().from(users).where(eq(users.clerkId, cid));
-      return u;
-    })
+    playerClerkIds.map((cid) => ensureUser(cid))
   );
-
-  const validPlayers = playerUsers.filter(Boolean);
 
   // Create round
   const [round] = await db
@@ -66,10 +58,10 @@ export async function POST(
     .returning();
 
   // Assign random words to each player
-  const words = getRandomWords(validPlayers.length);
+  const words = getRandomWords(playerUsers.length);
 
   const promptEntries = await Promise.all(
-    validPlayers.map(async (player, i) => {
+    playerUsers.map(async (player, i) => {
       const [p] = await db
         .insert(prompts)
         .values({
@@ -95,7 +87,7 @@ export async function POST(
     { promptId: string; targetWord: string; tabooWords: string[] }
   > = {};
 
-  for (let i = 0; i < validPlayers.length; i++) {
+  for (let i = 0; i < playerUsers.length; i++) {
     assignments[playerClerkIds[i]] = {
       promptId: promptEntries[i].id,
       targetWord: promptEntries[i].targetWord,

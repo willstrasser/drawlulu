@@ -54,6 +54,14 @@ export type Storage = {
   roundId: string | null;
 };
 
+export type UserMeta = {
+  id: string; // Clerk user ID, set by liveblocks.prepareSession(userId)
+  info: {
+    username: string;
+    imageUrl?: string;
+  };
+};
+
 export const {
   RoomProvider,
   useRoom,
@@ -64,4 +72,4 @@ export const {
   useMutation,
   useBroadcastEvent,
   useEventListener,
-} = createRoomContext<Presence, Storage>(client);
+} = createRoomContext<Presence, Storage, UserMeta>(client);
