@@ -9,6 +9,7 @@ export type Presence = {
   username: string;
   imageUrl?: string;
   isReady: boolean;
+  hasSubmittedPrompt: boolean;
 };
 
 export type GamePhase =
@@ -17,12 +18,6 @@ export type GamePhase =
   | "generating"
   | "guessing"
   | "scoreboard";
-
-export type PlayerScore = {
-  userId: string;
-  username: string;
-  score: number;
-};
 
 export type GuessEntry = {
   userId: string;
@@ -33,25 +28,12 @@ export type GuessEntry = {
   timestamp: number;
 };
 
-export type PromptEntry = {
-  promptId: string;
-  userId: string;
-  username: string;
-  targetWord: string;
-  tabooWords: string[];
-  imageUrl: string | null;
-  forbiddenWordsUsed: string[];
-};
-
 export type Storage = {
   gamePhase: GamePhase;
   currentPromptIndex: number;
   timerEndsAt: number | null;
-  scores: PlayerScore[];
   currentGuesses: GuessEntry[];
-  prompts: PromptEntry[];
   hostId: string;
-  roundId: string | null;
 };
 
 export type UserMeta = {

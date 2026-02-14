@@ -1,36 +1,49 @@
 "use client";
 
-import { useState } from "react";
-import { useStorage } from "@/liveblocks.config";
+import { useEffect, useState } from "react";
+import { useStorage, useSelf } from "@/liveblocks.config";
 import { Timer } from "./Timer";
-import type { GuessEntry, PromptEntry } from "@/liveblocks.config";
+import type { GuessEntry } from "@/liveblocks.config";
+import type { PromptEntry } from "@/app/game/[code]/page";
 
 type GuessingPhaseProps = {
-  currentClerkId: string;
   roomCode: string;
+  prompts: PromptEntry[] | null;
+  currentPromptIndex: number;
   onGuessSubmitted: (guess: GuessEntry) => void;
 };
 
 export function GuessingPhase({
-  currentClerkId,
   roomCode,
+  prompts,
+  currentPromptIndex,
   onGuessSubmitted,
 }: GuessingPhaseProps) {
-  const prompts = useStorage((root) => root.prompts);
-  const currentIndex = useStorage((root) => root.currentPromptIndex);
+  const self = useSelf();
   const currentGuesses = useStorage((root) => root.currentGuesses);
   const [guessText, setGuessText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hasGuessedCorrectly, setHasGuessedCorrectly] = useState(false);
 
+  // Reset guess state when prompt changes
+  useEffect(() => {
+    setHasGuessedCorrectly(false);
+    setGuessText("");
+  }, [currentPromptIndex]);
+
   if (!prompts || prompts.length === 0) {
-    return <p className="text-gray-400">No prompts to show.</p>;
+    return (
+      <div className="text-center">
+        <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-gray-400">Loading images...</p>
+      </div>
+    );
   }
 
-  const idx = currentIndex ?? 0;
-  const currentPrompt: PromptEntry = prompts[idx];
+  const currentPrompt = prompts[currentPromptIndex];
   if (!currentPrompt) return null;
 
+  const currentClerkId = self?.id as string;
   const isMyPrompt = currentPrompt.userId === currentClerkId;
 
   const handleGuess = async () => {
@@ -71,7 +84,7 @@ export function GuessingPhase({
 
       <div className="text-center">
         <p className="text-gray-400 text-sm">
-          Image {idx + 1} of {prompts.length} — by{" "}
+          Image {currentPromptIndex + 1} of {prompts.length} — by{" "}
           <span className="font-medium text-white">
             {currentPrompt.username}
           </span>

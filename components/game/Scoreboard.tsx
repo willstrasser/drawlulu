@@ -1,19 +1,27 @@
 "use client";
 
-import { useStorage } from "@/liveblocks.config";
+import type { PromptEntry, PlayerScore } from "@/app/game/[code]/page";
 
 type ScoreboardProps = {
   isHost: boolean;
+  scores: PlayerScore[] | null;
+  prompts: PromptEntry[] | null;
   onPlayAgain: () => void;
 };
 
-export function Scoreboard({ isHost, onPlayAgain }: ScoreboardProps) {
-  const scores = useStorage((root) => root.scores);
-  const prompts = useStorage((root) => root.prompts);
-
+export function Scoreboard({ isHost, scores, prompts, onPlayAgain }: ScoreboardProps) {
   const sortedScores = scores
     ? [...scores].sort((a, b) => b.score - a.score)
     : [];
+
+  if (!scores) {
+    return (
+      <div className="text-center">
+        <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-gray-400">Calculating scores...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg">

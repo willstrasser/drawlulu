@@ -9,12 +9,7 @@ import {
   useOthers,
   useSelf,
 } from "@/liveblocks.config";
-import type {
-  GuessEntry,
-  PromptEntry,
-  PlayerScore,
-  Storage,
-} from "@/liveblocks.config";
+import type { GuessEntry, Storage } from "@/liveblocks.config";
 import { useUser } from "@clerk/nextjs";
 import { Lobby } from "@/components/game/Lobby";
 import { PromptPhase } from "@/components/game/PromptPhase";
@@ -28,21 +23,39 @@ type MyAssignment = {
   tabooWords: string[];
 };
 
+export type PromptEntry = {
+  promptId: string;
+  userId: string;
+  username: string;
+  targetWord: string;
+  tabooWords: string[];
+  imageUrl: string | null;
+  forbiddenWordsUsed: string[];
+};
+
+export type PlayerScore = {
+  userId: string;
+  username: string;
+  score: number;
+};
+
 function GameRoom({ code }: { code: string }) {
   const { user } = useUser();
   const self = useSelf();
   const others = useOthers();
   const gamePhase = useStorage((root) => root.gamePhase);
   const hostId = useStorage((root) => root.hostId);
-  const roundId = useStorage((root) => root.roundId);
   const currentPromptIndex = useStorage((root) => root.currentPromptIndex);
-  const prompts = useStorage((root) => root.prompts);
   const timerEndsAt = useStorage((root) => root.timerEndsAt);
 
   const [myPresence, setMyPresence] = useMyPresence();
   const [hasSubmittedPrompt, setHasSubmittedPrompt] = useState(false);
   const [myAssignment, setMyAssignment] = useState<MyAssignment | null>(null);
   const [fetchingAssignment, setFetchingAssignment] = useState(false);
+
+  // DB-sourced state (fetched per phase)
+  const [prompts, setPrompts] = useState<PromptEntry[] | null>(null);
+  const [scores, setScores] = useState<PlayerScore[] | null>(null);
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
@@ -54,11 +67,12 @@ function GameRoom({ code }: { code: string }) {
         username: user.username || user.firstName || "Player",
         imageUrl: user.imageUrl,
         isReady: false,
+        hasSubmittedPrompt: false,
       });
     }
   }, [user, setMyPresence]);
 
-  // Mutations to update shared storage
+  // Liveblocks mutations (only ephemeral state)
   const setGamePhase = useMutation(({ storage }, phase: string) => {
     storage.set("gamePhase", phase as Storage["gamePhase"]);
   }, []);
@@ -67,24 +81,12 @@ function GameRoom({ code }: { code: string }) {
     storage.set("timerEndsAt", endsAt);
   }, []);
 
-  const setPrompts = useMutation(({ storage }, promptList: PromptEntry[]) => {
-    storage.set("prompts", promptList as unknown as Storage["prompts"]);
-  }, []);
-
   const setCurrentPromptIndex = useMutation(({ storage }, index: number) => {
     storage.set("currentPromptIndex", index);
   }, []);
 
-  const setRoundId = useMutation(({ storage }, id: string | null) => {
-    storage.set("roundId", id);
-  }, []);
-
   const setHostIdMutation = useMutation(({ storage }, id: string) => {
     storage.set("hostId", id);
-  }, []);
-
-  const setScores = useMutation(({ storage }, scores: PlayerScore[]) => {
-    storage.set("scores", scores as unknown as Storage["scores"]);
   }, []);
 
   const addGuess = useMutation(({ storage }, guess: GuessEntry) => {
@@ -110,7 +112,7 @@ function GameRoom({ code }: { code: string }) {
     }
   }, [storageLoaded, self, hostId, setHostIdMutation]);
 
-  // Fetch my assignment when phase changes to "prompting"
+  // Fetch assignment when phase changes to "prompting"
   useEffect(() => {
     if (gamePhase === "prompting" && !myAssignment && !fetchingAssignment) {
       setFetchingAssignment(true);
@@ -125,11 +127,40 @@ function GameRoom({ code }: { code: string }) {
         .catch((e) => console.error("Failed to fetch assignment:", e))
         .finally(() => setFetchingAssignment(false));
     }
-    // Reset assignment when leaving prompting phase
     if (gamePhase !== "prompting" && gamePhase !== "generating") {
       setMyAssignment(null);
     }
   }, [gamePhase, code, myAssignment, fetchingAssignment]);
+
+  // Fetch prompts from DB when phase changes to "guessing"
+  useEffect(() => {
+    if (gamePhase === "guessing" && !prompts) {
+      fetch(`/api/games/${code}/round-prompts`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.prompts) setPrompts(data.prompts);
+        })
+        .catch((e) => console.error("Failed to fetch prompts:", e));
+    }
+    if (gamePhase === "lobby") {
+      setPrompts(null);
+    }
+  }, [gamePhase, code, prompts]);
+
+  // Fetch scores from DB when phase changes to "scoreboard"
+  useEffect(() => {
+    if (gamePhase === "scoreboard" && !scores) {
+      fetch(`/api/games/${code}/scores`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.scores) setScores(data.scores);
+        })
+        .catch((e) => console.error("Failed to fetch scores:", e));
+    }
+    if (gamePhase === "lobby") {
+      setScores(null);
+    }
+  }, [gamePhase, code, scores]);
 
   // Handle game start (host only)
   const handleStart = async (playerClerkIds: string[]) => {
@@ -141,56 +172,40 @@ function GameRoom({ code }: { code: string }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
-    setRoundId(data.roundId);
+    setPrompts(null);
+    setScores(null);
+    setMyPresence({ hasSubmittedPrompt: false });
     setGamePhase("prompting");
     setTimerEndsAt(Date.now() + 60000);
-    // Host's assignment will be fetched by the useEffect above
   };
 
   // Timer check for phase transitions (host only)
   const phaseTransitionRef = useRef(false);
+  const gamePhaseRef = useRef(gamePhase);
+  const currentPromptIndexRef = useRef(currentPromptIndex);
+  const promptsRef = useRef(prompts);
 
-  useEffect(() => {
-    if (!isHost || !timerEndsAt || phaseTransitionRef.current) return;
-
-    const timeLeft = timerEndsAt - Date.now();
-    if (timeLeft <= 0) {
-      handleTimerEnd();
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      handleTimerEnd();
-    }, timeLeft);
-
-    return () => clearTimeout(timeout);
-  }, [isHost, timerEndsAt, gamePhase]);
+  // Keep refs in sync
+  gamePhaseRef.current = gamePhase;
+  currentPromptIndexRef.current = currentPromptIndex;
+  promptsRef.current = prompts;
 
   const handleTimerEnd = useCallback(async () => {
     if (phaseTransitionRef.current) return;
     phaseTransitionRef.current = true;
 
-    if (gamePhase === "prompting") {
+    const phase = gamePhaseRef.current;
+    const idx = currentPromptIndexRef.current ?? 0;
+    const currentPrompts = promptsRef.current;
+
+    if (phase === "prompting") {
       setGamePhase("generating");
       setTimerEndsAt(null);
 
       try {
         await fetch(`/api/games/${code}/generate`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roundId }),
         });
-
-        // Fetch full prompt details for the guessing phase
-        const promptRes = await fetch(`/api/games/${code}/round-prompts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roundId }),
-        });
-        if (promptRes.ok) {
-          const promptData = await promptRes.json();
-          setPrompts(promptData.prompts);
-        }
 
         setCurrentPromptIndex(0);
         clearGuesses();
@@ -199,29 +214,33 @@ function GameRoom({ code }: { code: string }) {
       } catch (e) {
         console.error("Failed to generate images:", e);
       }
-    } else if (gamePhase === "guessing") {
-      const nextIndex = (currentPromptIndex ?? 0) + 1;
-      if (prompts && nextIndex < prompts.length) {
+    } else if (phase === "guessing") {
+      const nextIndex = idx + 1;
+      if (currentPrompts && nextIndex < currentPrompts.length) {
         setCurrentPromptIndex(nextIndex);
         clearGuesses();
         setTimerEndsAt(Date.now() + 30000);
       } else {
-        const scoresRes = await fetch(`/api/games/${code}/scores`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roundId }),
-        });
-        if (scoresRes.ok) {
-          const scoresData = await scoresRes.json();
-          setScores(scoresData.scores);
-        }
         setGamePhase("scoreboard");
         setTimerEndsAt(null);
       }
     }
 
     phaseTransitionRef.current = false;
-  }, [gamePhase, roundId, currentPromptIndex, prompts]);
+  }, [code]);
+
+  useEffect(() => {
+    if (!isHost || !timerEndsAt) return;
+
+    const timeLeft = timerEndsAt - Date.now();
+    if (timeLeft <= 0) {
+      handleTimerEnd();
+      return;
+    }
+
+    const timeout = setTimeout(handleTimerEnd, timeLeft);
+    return () => clearTimeout(timeout);
+  }, [isHost, timerEndsAt, handleTimerEnd]);
 
   const handleGuessSubmitted = (guess: GuessEntry) => {
     addGuess(guess);
@@ -237,7 +256,21 @@ function GameRoom({ code }: { code: string }) {
 
   const handlePromptSubmitted = () => {
     setHasSubmittedPrompt(true);
+    setMyPresence({ hasSubmittedPrompt: true });
   };
+
+  // Skip timer when all players have submitted prompts
+  const allSubmitted =
+    gamePhase === "prompting" &&
+    self?.presence.hasSubmittedPrompt &&
+    others.every((o) => o.presence.hasSubmittedPrompt);
+
+  useEffect(() => {
+    if (isHost && allSubmitted && timerEndsAt && timerEndsAt > Date.now() + 500) {
+      // Expire the timer immediately — the existing timer effect will pick it up
+      setTimerEndsAt(Date.now());
+    }
+  }, [isHost, allSubmitted]);
 
   if (!storageLoaded) {
     return (
@@ -297,16 +330,22 @@ function GameRoom({ code }: { code: string }) {
 
         {gamePhase === "generating" && <GeneratingPhase />}
 
-        {gamePhase === "guessing" && self && (
+        {gamePhase === "guessing" && (
           <GuessingPhase
-            currentClerkId={self.id as string}
             roomCode={code}
+            prompts={prompts}
+            currentPromptIndex={currentPromptIndex ?? 0}
             onGuessSubmitted={handleGuessSubmitted}
           />
         )}
 
         {gamePhase === "scoreboard" && (
-          <Scoreboard isHost={isHost} onPlayAgain={handlePlayAgain} />
+          <Scoreboard
+            isHost={isHost}
+            scores={scores}
+            prompts={prompts}
+            onPlayAgain={handlePlayAgain}
+          />
         )}
       </main>
     </div>
@@ -326,16 +365,14 @@ export default function GamePage({
       initialPresence={{
         username: "",
         isReady: false,
+        hasSubmittedPrompt: false,
       }}
       initialStorage={{
         gamePhase: "lobby",
         currentPromptIndex: 0,
         timerEndsAt: null,
-        scores: [] as unknown as Storage["scores"],
         currentGuesses: [] as unknown as Storage["currentGuesses"],
-        prompts: [] as unknown as Storage["prompts"],
         hostId: "",
-        roundId: null,
       }}
     >
       <GameRoom code={code} />

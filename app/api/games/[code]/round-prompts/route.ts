@@ -1,27 +1,33 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { prompts, users } from "@/lib/db/schema";
+import { games, prompts, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function POST(
-  request: Request,
+export async function GET(
+  _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
-  await params;
+  const { code } = await params;
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { roundId } = (await request.json()) as { roundId: string };
+  const [game] = await db
+    .select()
+    .from(games)
+    .where(eq(games.roomCode, code));
+
+  if (!game || !game.currentRoundId) {
+    return NextResponse.json({ error: "No active round" }, { status: 404 });
+  }
 
   const roundPrompts = await db
     .select()
     .from(prompts)
-    .where(eq(prompts.roundId, roundId));
+    .where(eq(prompts.roundId, game.currentRoundId));
 
-  // Join with users to get clerk IDs and usernames
   const promptsWithUsers = await Promise.all(
     roundPrompts.map(async (p) => {
       const [user] = await db.select().from(users).where(eq(users.id, p.userId));

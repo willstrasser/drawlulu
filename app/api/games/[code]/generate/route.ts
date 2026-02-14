@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/fal";
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ code: string }> },
 ) {
   const { code } = await params;
@@ -15,21 +15,17 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { roundId } = (await request.json()) as { roundId: string };
-
   const [game] = await db.select().from(games).where(eq(games.roomCode, code));
 
-  if (!game) {
-    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  if (!game || !game.currentRoundId) {
+    return NextResponse.json({ error: "No active round" }, { status: 404 });
   }
 
-  // Get all prompts for this round
   const roundPrompts = await db
     .select()
     .from(prompts)
-    .where(eq(prompts.roundId, roundId));
+    .where(eq(prompts.roundId, game.currentRoundId));
 
-  // Generate images in parallel
   const results = await Promise.allSettled(
     roundPrompts.map(async (p) => {
       if (!p.sanitizedPrompt) return null;
@@ -50,7 +46,6 @@ export async function POST(
     )
     .map((r) => r.value!);
 
-  // Update game status
   await db
     .update(games)
     .set({ status: "guessing" })

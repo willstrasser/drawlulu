@@ -1,28 +1,34 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { prompts, guesses, users } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { games, prompts, guesses, users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { getPrompterScore } from "@/lib/scoring";
 
-export async function POST(
-  request: Request,
+export async function GET(
+  _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
-  await params;
+  const { code } = await params;
   const { userId: clerkId } = await auth();
   if (!clerkId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { roundId } = (await request.json()) as { roundId: string };
+  const [game] = await db
+    .select()
+    .from(games)
+    .where(eq(games.roomCode, code));
+
+  if (!game || !game.currentRoundId) {
+    return NextResponse.json({ error: "No active round" }, { status: 404 });
+  }
 
   const roundPrompts = await db
     .select()
     .from(prompts)
-    .where(eq(prompts.roundId, roundId));
+    .where(eq(prompts.roundId, game.currentRoundId));
 
-  // Aggregate scores per player
   const scoreMap: Record<string, { username: string; score: number }> = {};
 
   for (const prompt of roundPrompts) {
@@ -36,7 +42,6 @@ export async function POST(
       scoreMap[user.clerkId] = { username: user.username, score: 0 };
     }
 
-    // Get guesses for this prompt
     const promptGuesses = await db
       .select()
       .from(guesses)
@@ -45,14 +50,12 @@ export async function POST(
     const correctGuesses = promptGuesses.filter((g) => g.isCorrect);
     const anyCorrect = correctGuesses.length > 0;
 
-    // Prompter score
     const prompterScore = getPrompterScore(
       anyCorrect,
       (prompt.forbiddenWordsUsed || []).length
     );
     scoreMap[user.clerkId].score += prompterScore;
 
-    // Guesser scores
     for (const guess of promptGuesses) {
       const [guesser] = await db
         .select()
