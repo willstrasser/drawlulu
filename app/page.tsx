@@ -45,10 +45,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">
-          Draw<span className="text-green-400">lulu</span>
-        </h1>
+      <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-end">
         {isSignedIn ? (
           <UserButton />
         ) : (

@@ -286,9 +286,9 @@ function GameRoom({ code }: { code: string }) {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">
+        <a href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
           Draw<span className="text-green-400">lulu</span>
-        </h1>
+        </a>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-400">{myPresence?.username}</span>
           {user?.imageUrl && (
