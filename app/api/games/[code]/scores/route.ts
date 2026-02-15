@@ -31,6 +31,8 @@ export async function GET(
 
   const scoreMap: Record<string, { username: string; score: number }> = {};
 
+  const promptBreakdowns = [];
+
   for (const prompt of roundPrompts) {
     const [user] = await db
       .select()
@@ -50,12 +52,11 @@ export async function GET(
     const correctGuesses = promptGuesses.filter((g) => g.isCorrect);
     const anyCorrect = correctGuesses.length > 0;
 
-    const prompterScore = getPrompterScore(
-      anyCorrect,
-      (prompt.forbiddenWordsUsed || []).length
-    );
+    const forbiddenCount = (prompt.forbiddenWordsUsed || []).length;
+    const prompterScore = getPrompterScore(anyCorrect, forbiddenCount);
     scoreMap[user.clerkId].score += prompterScore;
 
+    const guessDetails = [];
     for (const guess of promptGuesses) {
       const [guesser] = await db
         .select()
@@ -71,7 +72,24 @@ export async function GET(
       }
 
       scoreMap[guesser.clerkId].score += guess.pointsAwarded;
+
+      if (guess.isCorrect) {
+        guessDetails.push({
+          username: guesser.username,
+          points: guess.pointsAwarded,
+        });
+      }
     }
+
+    promptBreakdowns.push({
+      promptId: prompt.id,
+      prompter: user.username,
+      targetWord: prompt.targetWord,
+      imageUrl: prompt.imageUrl,
+      forbiddenWordsUsed: prompt.forbiddenWordsUsed || [],
+      prompterPoints: prompterScore,
+      correctGuesses: guessDetails,
+    });
   }
 
   const scores = Object.entries(scoreMap).map(([userId, data]) => ({
@@ -80,5 +98,5 @@ export async function GET(
     score: data.score,
   }));
 
-  return NextResponse.json({ scores });
+  return NextResponse.json({ scores, promptBreakdowns });
 }

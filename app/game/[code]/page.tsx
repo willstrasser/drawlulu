@@ -39,6 +39,16 @@ export type PlayerScore = {
   score: number;
 };
 
+export type PromptBreakdown = {
+  promptId: string;
+  prompter: string;
+  targetWord: string;
+  imageUrl: string | null;
+  forbiddenWordsUsed: string[];
+  prompterPoints: number;
+  correctGuesses: { username: string; points: number }[];
+};
+
 function GameRoom({ code }: { code: string }) {
   const { user } = useUser();
   const self = useSelf();
@@ -56,6 +66,7 @@ function GameRoom({ code }: { code: string }) {
   // DB-sourced state (fetched per phase)
   const [prompts, setPrompts] = useState<PromptEntry[] | null>(null);
   const [scores, setScores] = useState<PlayerScore[] | null>(null);
+  const [promptBreakdowns, setPromptBreakdowns] = useState<PromptBreakdown[] | null>(null);
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
@@ -154,11 +165,13 @@ function GameRoom({ code }: { code: string }) {
         .then((res) => res.json())
         .then((data) => {
           if (data.scores) setScores(data.scores);
+          if (data.promptBreakdowns) setPromptBreakdowns(data.promptBreakdowns);
         })
         .catch((e) => console.error("Failed to fetch scores:", e));
     }
     if (gamePhase === "lobby") {
       setScores(null);
+      setPromptBreakdowns(null);
     }
   }, [gamePhase, code, scores]);
 
@@ -174,6 +187,7 @@ function GameRoom({ code }: { code: string }) {
 
     setPrompts(null);
     setScores(null);
+    setPromptBreakdowns(null);
     setMyPresence({ hasSubmittedPrompt: false });
     setGamePhase("prompting");
     setTimerEndsAt(Date.now() + 60000);
@@ -343,7 +357,7 @@ function GameRoom({ code }: { code: string }) {
           <Scoreboard
             isHost={isHost}
             scores={scores}
-            prompts={prompts}
+            promptBreakdowns={promptBreakdowns}
             onPlayAgain={handlePlayAgain}
           />
         )}

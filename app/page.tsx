@@ -59,7 +59,7 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center justify-center p-8 gap-12">
         <div className="text-center">
-          <h2 className="text-5xl font-bold mb-4">
+          <h2 className="text-9xl font-bold mb-4">
             Draw<span className="text-green-400">lulu</span>
           </h2>
           <p className="text-gray-400 text-lg max-w-md">
