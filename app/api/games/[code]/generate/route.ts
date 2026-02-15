@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { games, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/fal";
+import { PHASE } from "@/lib/phases";
 
 export async function POST(
   _request: Request,
@@ -48,7 +49,7 @@ export async function POST(
 
   await db
     .update(games)
-    .set({ status: "guessing" })
+    .set({ status: PHASE.GUESSING })
     .where(eq(games.id, game.id));
 
   return NextResponse.json({ generated });

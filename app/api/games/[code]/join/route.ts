@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { PHASE } from "@/lib/phases";
 
 export async function POST(
   _request: Request,
@@ -46,7 +47,7 @@ export async function POST(
     return NextResponse.json({ error: "Game not found" }, { status: 404 });
   }
 
-  if (game.status !== "lobby") {
+  if (game.status !== PHASE.LOBBY) {
     return NextResponse.json(
       { error: "Game already in progress" },
       { status: 400 }

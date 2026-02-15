@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useStorage, useOthers, useSelf } from "@/liveblocks.config";
+import { PHASE } from "@/liveblocks.config";
 import type { GamePhase } from "@/liveblocks.config";
 import type { PromptEntry } from "@/app/game/[code]/page";
 
@@ -14,13 +15,7 @@ type DevPanelProps = {
 
 export const DEV_PANEL_USER_IDS = new Set(["user_39aefS1uKSqNdL1nkVeKAWcjHvC"]);
 
-const PHASES: GamePhase[] = [
-  "lobby",
-  "prompting",
-  "generating",
-  "guessing",
-  "scoreboard",
-];
+const PHASES = Object.values(PHASE);
 
 export function DevPanel({
   code,

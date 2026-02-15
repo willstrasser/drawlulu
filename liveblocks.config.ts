@@ -13,12 +13,9 @@ export type Presence = {
   hasSubmittedPrompt: boolean;
 };
 
-export type GamePhase =
-  | "lobby"
-  | "prompting"
-  | "generating"
-  | "guessing"
-  | "scoreboard";
+import type { GamePhase } from "@/lib/phases";
+export { PHASE } from "@/lib/phases";
+export type { GamePhase } from "@/lib/phases";
 
 export type GuessEntry = {
   userId: string;

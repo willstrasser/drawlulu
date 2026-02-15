@@ -9,6 +9,7 @@ import {
   useOthers,
   useSelf,
 } from "@/liveblocks.config";
+import { PHASE } from "@/liveblocks.config";
 import type { GuessEntry, Storage } from "@/liveblocks.config";
 import { useUser } from "@clerk/nextjs";
 import { getCategories } from "@/lib/words";
@@ -134,7 +135,7 @@ function GameRoom({ code }: { code: string }) {
   // Reset round-specific state whenever we enter "prompting" (including Play Again)
   const prevPhaseRef = useRef(gamePhase);
   useEffect(() => {
-    if (gamePhase === "prompting" && prevPhaseRef.current !== "prompting") {
+    if (gamePhase === PHASE.PROMPTING && prevPhaseRef.current !== PHASE.PROMPTING) {
       setMyAssignment(null);
       setFetchingAssignment(false);
       setHasSubmittedPrompt(false);
@@ -148,7 +149,7 @@ function GameRoom({ code }: { code: string }) {
 
   // Fetch assignment when phase changes to "prompting"
   useEffect(() => {
-    if (gamePhase === "prompting" && !myAssignment && !fetchingAssignment) {
+    if (gamePhase === PHASE.PROMPTING && !myAssignment && !fetchingAssignment) {
       setFetchingAssignment(true);
       fetch(`/api/games/${code}/my-assignment`)
         .then((res) => res.json())
@@ -161,14 +162,14 @@ function GameRoom({ code }: { code: string }) {
         .catch((e) => console.error("Failed to fetch assignment:", e))
         .finally(() => setFetchingAssignment(false));
     }
-    if (gamePhase !== "prompting" && gamePhase !== "generating") {
+    if (gamePhase !== PHASE.PROMPTING && gamePhase !== PHASE.GENERATING) {
       setMyAssignment(null);
     }
   }, [gamePhase, code, myAssignment, fetchingAssignment]);
 
   // Fetch prompts from DB when phase changes to "guessing"
   useEffect(() => {
-    if (gamePhase === "guessing" && !prompts) {
+    if (gamePhase === PHASE.GUESSING && !prompts) {
       fetch(`/api/games/${code}/round-prompts`)
         .then((res) => res.json())
         .then((data) => {
@@ -176,14 +177,14 @@ function GameRoom({ code }: { code: string }) {
         })
         .catch((e) => console.error("Failed to fetch prompts:", e));
     }
-    if (gamePhase === "lobby") {
+    if (gamePhase === PHASE.LOBBY) {
       setPrompts(null);
     }
   }, [gamePhase, code, prompts]);
 
   // Fetch scores from DB when phase changes to "scoreboard"
   useEffect(() => {
-    if (gamePhase === "scoreboard" && !scores) {
+    if (gamePhase === PHASE.SCOREBOARD && !scores) {
       fetch(`/api/games/${code}/scores`)
         .then((res) => res.json())
         .then((data) => {
@@ -192,7 +193,7 @@ function GameRoom({ code }: { code: string }) {
         })
         .catch((e) => console.error("Failed to fetch scores:", e));
     }
-    if (gamePhase === "lobby") {
+    if (gamePhase === PHASE.LOBBY) {
       setScores(null);
       setPromptBreakdowns(null);
     }
@@ -212,7 +213,7 @@ function GameRoom({ code }: { code: string }) {
     setScores(null);
     setPromptBreakdowns(null);
     setMyPresence({ hasSubmittedPrompt: false });
-    setGamePhase("prompting");
+    setGamePhase(PHASE.PROMPTING);
     setTimerEndsAt(Date.now() + 60000);
   };
 
@@ -235,8 +236,8 @@ function GameRoom({ code }: { code: string }) {
     const idx = currentPromptIndexRef.current ?? 0;
     const currentPrompts = promptsRef.current;
 
-    if (phase === "prompting") {
-      setGamePhase("generating");
+    if (phase === PHASE.PROMPTING) {
+      setGamePhase(PHASE.GENERATING);
       setTimerEndsAt(null);
 
       try {
@@ -246,19 +247,19 @@ function GameRoom({ code }: { code: string }) {
 
         setCurrentPromptIndex(0);
         clearGuesses();
-        setGamePhase("guessing");
+        setGamePhase(PHASE.GUESSING);
         setTimerEndsAt(Date.now() + 30000);
       } catch (e) {
         console.error("Failed to generate images:", e);
       }
-    } else if (phase === "guessing") {
+    } else if (phase === PHASE.GUESSING) {
       const nextIndex = idx + 1;
       if (currentPrompts && nextIndex < currentPrompts.length) {
         setCurrentPromptIndex(nextIndex);
         clearGuesses();
         setTimerEndsAt(Date.now() + 30000);
       } else {
-        setGamePhase("scoreboard");
+        setGamePhase(PHASE.SCOREBOARD);
         setTimerEndsAt(null);
       }
     }
@@ -298,7 +299,7 @@ function GameRoom({ code }: { code: string }) {
 
   // Skip timer when all players have submitted prompts
   const allSubmitted =
-    gamePhase === "prompting" &&
+    gamePhase === PHASE.PROMPTING &&
     self?.presence.hasSubmittedPrompt &&
     others.every((o) => o.presence.hasSubmittedPrompt);
 
@@ -351,7 +352,7 @@ function GameRoom({ code }: { code: string }) {
       </nav>
 
       <main className="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-57px)]">
-        {gamePhase === "lobby" && (
+        {gamePhase === PHASE.LOBBY && (
           <Lobby
             roomCode={code}
             isHost={isHost}
@@ -362,7 +363,7 @@ function GameRoom({ code }: { code: string }) {
           />
         )}
 
-        {gamePhase === "prompting" && myAssignment && (
+        {gamePhase === PHASE.PROMPTING && myAssignment && (
           <PromptPhase
             targetWord={myAssignment.targetWord}
             tabooWords={myAssignment.tabooWords}
@@ -374,16 +375,16 @@ function GameRoom({ code }: { code: string }) {
           />
         )}
 
-        {gamePhase === "prompting" && !myAssignment && (
+        {gamePhase === PHASE.PROMPTING && !myAssignment && (
           <div className="text-center">
             <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-gray-400">Loading your assignment...</p>
           </div>
         )}
 
-        {gamePhase === "generating" && <GeneratingPhase />}
+        {gamePhase === PHASE.GENERATING && <GeneratingPhase />}
 
-        {gamePhase === "guessing" && (
+        {gamePhase === PHASE.GUESSING && (
           <GuessingPhase
             roomCode={code}
             prompts={prompts}
@@ -393,7 +394,7 @@ function GameRoom({ code }: { code: string }) {
           />
         )}
 
-        {gamePhase === "scoreboard" && (
+        {gamePhase === PHASE.SCOREBOARD && (
           <Scoreboard
             isHost={isHost}
             scores={scores}
@@ -422,7 +423,7 @@ export default function GamePage({
         hasSubmittedPrompt: false,
       }}
       initialStorage={{
-        gamePhase: "lobby",
+        gamePhase: PHASE.LOBBY,
         currentPromptIndex: 0,
         timerEndsAt: null,
         currentGuesses: [] as unknown as Storage["currentGuesses"],

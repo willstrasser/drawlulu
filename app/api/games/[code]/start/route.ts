@@ -5,6 +5,7 @@ import { games, rounds, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getRandomCards } from "@/lib/words";
 import { ensureUser } from "@/lib/ensure-user";
+import { PHASE } from "@/lib/phases";
 
 export async function POST(
   request: Request,
@@ -79,7 +80,7 @@ export async function POST(
   // Update game status
   await db
     .update(games)
-    .set({ status: "prompting", currentRoundId: round.id })
+    .set({ status: PHASE.PROMPTING, currentRoundId: round.id })
     .where(eq(games.id, game.id));
 
   // Return prompt assignments keyed by clerkId

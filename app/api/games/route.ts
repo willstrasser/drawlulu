@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { games, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateRoomCode } from "@/lib/utils";
+import { PHASE } from "@/lib/phases";
 
 export async function POST() {
   const { userId: clerkId } = await auth();
@@ -51,7 +52,7 @@ export async function POST() {
     .values({
       roomCode,
       hostId: dbUser.id,
-      status: "lobby",
+      status: PHASE.LOBBY,
     })
     .returning();
 
