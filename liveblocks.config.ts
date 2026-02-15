@@ -9,6 +9,7 @@ export type Presence = {
   username: string;
   imageUrl?: string;
   isReady: boolean;
+  // the following values will change over the course of the gameplay
   hasSubmittedPrompt: boolean;
 };
 

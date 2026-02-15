@@ -131,6 +131,21 @@ function GameRoom({ code }: { code: string }) {
     }
   }, [storageLoaded, self, hostId, setHostIdMutation]);
 
+  // Reset round-specific state whenever we enter "prompting" (including Play Again)
+  const prevPhaseRef = useRef(gamePhase);
+  useEffect(() => {
+    if (gamePhase === "prompting" && prevPhaseRef.current !== "prompting") {
+      setMyAssignment(null);
+      setFetchingAssignment(false);
+      setHasSubmittedPrompt(false);
+      setMyPresence({ hasSubmittedPrompt: false });
+      setPrompts(null);
+      setScores(null);
+      setPromptBreakdowns(null);
+    }
+    prevPhaseRef.current = gamePhase;
+  }, [gamePhase]);
+
   // Fetch assignment when phase changes to "prompting"
   useEffect(() => {
     if (gamePhase === "prompting" && !myAssignment && !fetchingAssignment) {
