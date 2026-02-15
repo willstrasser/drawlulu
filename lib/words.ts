@@ -471,8 +471,14 @@ export const terms = [
   },
 ];
 
-export function getRandomCards(count: number): Card[] {
-  const allCards = terms.flatMap((category) => category.cards);
-  const shuffled = [...allCards].sort(() => Math.random() - 0.5);
+export function getCategories(): string[] {
+  return terms.map((t) => t.category);
+}
+
+export function getRandomCards(count: number, category?: string): Card[] {
+  const source = category
+    ? terms.find((t) => t.category === category)?.cards ?? []
+    : terms.flatMap((t) => t.cards);
+  const shuffled = [...source].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }

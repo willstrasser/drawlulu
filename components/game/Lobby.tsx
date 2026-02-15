@@ -8,9 +8,12 @@ type LobbyProps = {
   roomCode: string;
   isHost: boolean;
   onStart: (playerClerkIds: string[]) => Promise<void>;
+  categories: string[];
+  selectedCategory: string;
+  onSelectCategory: (cat: string) => void;
 };
 
-export function Lobby({ roomCode, isHost, onStart }: LobbyProps) {
+export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory, onSelectCategory }: LobbyProps) {
   const others = useOthers();
   const self = useSelf();
   const [starting, setStarting] = useState(false);
@@ -31,7 +34,7 @@ export function Lobby({ roomCode, isHost, onStart }: LobbyProps) {
   };
 
   const playerCount = others.length + 1;
-  const canStart = isHost && playerCount >= 2;
+  const canStart = isHost && playerCount >= 2 && selectedCategory !== "";
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -52,6 +55,35 @@ export function Lobby({ roomCode, isHost, onStart }: LobbyProps) {
         <PlayerList />
       </div>
 
+      <div className="w-full max-w-sm">
+        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide text-center">
+          {isHost ? "Choose a Category" : "Category"}
+        </h3>
+        <div className="flex flex-wrap justify-center gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => isHost && onSelectCategory(cat)}
+              disabled={!isHost}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === cat
+                  ? "bg-green-600 text-white"
+                  : isHost
+                    ? "bg-white/10 text-gray-300 hover:bg-white/20"
+                    : "bg-white/5 text-gray-500 cursor-default"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        {!selectedCategory && !isHost && (
+          <p className="text-gray-500 text-xs text-center mt-2">
+            Waiting for host to pick a category...
+          </p>
+        )}
+      </div>
+
       {isHost ? (
         <button
           onClick={handleStart}
@@ -62,7 +94,9 @@ export function Lobby({ roomCode, isHost, onStart }: LobbyProps) {
             ? "Starting..."
             : playerCount < 2
               ? "Need at least 2 players"
-              : "Start Game"}
+              : !selectedCategory
+                ? "Select a category"
+                : "Start Game"}
         </button>
       ) : (
         <p className="text-gray-400">Waiting for host to start the game...</p>

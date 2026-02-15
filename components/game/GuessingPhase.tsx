@@ -11,6 +11,7 @@ type GuessingPhaseProps = {
   prompts: PromptEntry[] | null;
   currentPromptIndex: number;
   onGuessSubmitted: (guess: GuessEntry) => void;
+  category: string;
 };
 
 export function GuessingPhase({
@@ -18,6 +19,7 @@ export function GuessingPhase({
   prompts,
   currentPromptIndex,
   onGuessSubmitted,
+  category,
 }: GuessingPhaseProps) {
   const self = useSelf();
   const currentGuesses = useStorage((root) => root.currentGuesses);
@@ -83,7 +85,12 @@ export function GuessingPhase({
       <Timer />
 
       <div className="text-center">
-        <p className="text-gray-400 text-sm">
+        {category && (
+          <span className="text-xs font-medium uppercase tracking-wide text-green-400 bg-green-400/10 px-3 py-1 rounded-full">
+            {category}
+          </span>
+        )}
+        <p className="text-gray-400 text-sm mt-2">
           Image {currentPromptIndex + 1} of {prompts.length} — by{" "}
           <span className="font-medium text-white">
             {currentPrompt.username}

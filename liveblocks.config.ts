@@ -34,6 +34,7 @@ export type Storage = {
   timerEndsAt: number | null;
   currentGuesses: GuessEntry[];
   hostId: string;
+  selectedCategory: string;
 };
 
 export type UserMeta = {

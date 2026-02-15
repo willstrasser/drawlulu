@@ -11,6 +11,7 @@ import {
 } from "@/liveblocks.config";
 import type { GuessEntry, Storage } from "@/liveblocks.config";
 import { useUser } from "@clerk/nextjs";
+import { getCategories } from "@/lib/words";
 import { Lobby } from "@/components/game/Lobby";
 import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
@@ -57,6 +58,7 @@ function GameRoom({ code }: { code: string }) {
   const hostId = useStorage((root) => root.hostId);
   const currentPromptIndex = useStorage((root) => root.currentPromptIndex);
   const timerEndsAt = useStorage((root) => root.timerEndsAt);
+  const selectedCategory = useStorage((root) => root.selectedCategory);
 
   const [myPresence, setMyPresence] = useMyPresence();
   const [hasSubmittedPrompt, setHasSubmittedPrompt] = useState(false);
@@ -98,6 +100,10 @@ function GameRoom({ code }: { code: string }) {
 
   const setHostIdMutation = useMutation(({ storage }, id: string) => {
     storage.set("hostId", id);
+  }, []);
+
+  const setSelectedCategory = useMutation(({ storage }, category: string) => {
+    storage.set("selectedCategory", category);
   }, []);
 
   const addGuess = useMutation(({ storage }, guess: GuessEntry) => {
@@ -180,7 +186,7 @@ function GameRoom({ code }: { code: string }) {
     const res = await fetch(`/api/games/${code}/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerClerkIds }),
+      body: JSON.stringify({ playerClerkIds, category: selectedCategory }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
@@ -321,6 +327,9 @@ function GameRoom({ code }: { code: string }) {
             roomCode={code}
             isHost={isHost}
             onStart={handleStart}
+            categories={getCategories()}
+            selectedCategory={selectedCategory ?? ""}
+            onSelectCategory={setSelectedCategory}
           />
         )}
 
@@ -332,6 +341,7 @@ function GameRoom({ code }: { code: string }) {
             roomCode={code}
             onSubmitted={handlePromptSubmitted}
             hasSubmitted={hasSubmittedPrompt}
+            category={selectedCategory ?? ""}
           />
         )}
 
@@ -350,6 +360,7 @@ function GameRoom({ code }: { code: string }) {
             prompts={prompts}
             currentPromptIndex={currentPromptIndex ?? 0}
             onGuessSubmitted={handleGuessSubmitted}
+            category={selectedCategory ?? ""}
           />
         )}
 
@@ -387,6 +398,7 @@ export default function GamePage({
         timerEndsAt: null,
         currentGuesses: [] as unknown as Storage["currentGuesses"],
         hostId: "",
+        selectedCategory: "",
       }}
     >
       <GameRoom code={code} />

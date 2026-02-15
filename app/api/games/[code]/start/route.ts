@@ -32,8 +32,9 @@ export async function POST(
   }
 
   // Get player clerk IDs from request (sent from Liveblocks presence)
-  const { playerClerkIds } = (await request.json()) as {
+  const { playerClerkIds, category } = (await request.json()) as {
     playerClerkIds: string[];
+    category?: string;
   };
 
   if (playerClerkIds.length < 2) {
@@ -58,7 +59,7 @@ export async function POST(
     .returning();
 
   // Assign random cards to each player
-  const cards = getRandomCards(playerUsers.length);
+  const cards = getRandomCards(playerUsers.length, category);
 
   const promptEntries = await Promise.all(
     playerUsers.map(async (player, i) => {

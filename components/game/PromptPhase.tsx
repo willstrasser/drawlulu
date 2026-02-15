@@ -10,6 +10,7 @@ type PromptPhaseProps = {
   roomCode: string;
   onSubmitted: () => void;
   hasSubmitted: boolean;
+  category: string;
 };
 
 export function PromptPhase({
@@ -19,6 +20,7 @@ export function PromptPhase({
   roomCode,
   onSubmitted,
   hasSubmitted,
+  category,
 }: PromptPhaseProps) {
   const [promptText, setPromptText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -70,6 +72,12 @@ export function PromptPhase({
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-lg">
       <Timer />
+
+      {category && (
+        <span className="text-xs font-medium uppercase tracking-wide text-green-400 bg-green-400/10 px-3 py-1 rounded-full">
+          {category}
+        </span>
+      )}
 
       <div className="text-center">
         <p className="text-gray-400 text-sm mb-1">Your target word is:</p>
