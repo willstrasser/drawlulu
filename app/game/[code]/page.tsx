@@ -17,6 +17,8 @@ import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
 import { GuessingPhase } from "@/components/game/GuessingPhase";
 import { Scoreboard } from "@/components/game/Scoreboard";
+import { DevPanel, DEV_PANEL_USER_IDS } from "@/components/game/DevPanel";
+import type { GamePhase } from "@/liveblocks.config";
 
 type MyAssignment = {
   promptId: string;
@@ -303,8 +305,20 @@ function GameRoom({ code }: { code: string }) {
     );
   }
 
+  const showDevPanel =
+    process.env.NODE_ENV === "development" ||
+    (user?.id && DEV_PANEL_USER_IDS.has(user.id));
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      {showDevPanel && (
+        <DevPanel
+          code={code}
+          prompts={prompts}
+          onExpireTimer={() => setTimerEndsAt(Date.now())}
+          onSetPhase={(phase: GamePhase) => setGamePhase(phase)}
+        />
+      )}
       <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
         <a href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
           Draw<span className="text-green-400">lulu</span>
