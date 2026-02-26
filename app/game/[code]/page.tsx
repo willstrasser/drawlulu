@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import {
   RoomProvider,
   useMyPresence,
@@ -20,6 +20,8 @@ import { GuessingPhase } from "@/components/game/GuessingPhase";
 import { Scoreboard } from "@/components/game/Scoreboard";
 import { DevPanel, DEV_PANEL_USER_IDS } from "@/components/game/DevPanel";
 import type { GamePhase } from "@/liveblocks.config";
+import Link from "next/link";
+import Image from "next/image";
 
 type MyAssignment = {
   promptId: string;
@@ -64,14 +66,30 @@ function GameRoom({ code }: { code: string }) {
   const selectedCategory = useStorage((root) => root.selectedCategory);
 
   const [myPresence, setMyPresence] = useMyPresence();
-  const [hasSubmittedPrompt, setHasSubmittedPrompt] = useState(false);
-  const [myAssignment, setMyAssignment] = useState<MyAssignment | null>(null);
-  const [fetchingAssignment, setFetchingAssignment] = useState(false);
 
-  // DB-sourced state (fetched per phase)
-  const [prompts, setPrompts] = useState<PromptEntry[] | null>(null);
-  const [scores, setScores] = useState<PlayerScore[] | null>(null);
-  const [promptBreakdowns, setPromptBreakdowns] = useState<PromptBreakdown[] | null>(null);
+  type RoundData = {
+    myAssignment: MyAssignment | null;
+    prompts: PromptEntry[] | null;
+    scores: PlayerScore[] | null;
+    promptBreakdowns: PromptBreakdown[] | null;
+  };
+  const initialRoundData: RoundData = useMemo(
+    () => ({
+      myAssignment: null,
+      prompts: null,
+      scores: null,
+      promptBreakdowns: null,
+    }),
+    [],
+  );
+  const [roundData, setRoundData] = useState<RoundData>(initialRoundData);
+  // Fetch guard — not display state, so no re-render needed when it flips
+  const fetchingAssignmentRef = useRef(false);
+
+  // Presence is the source of truth; derive locally to avoid duplicate state
+  const hasSubmittedPrompt = myPresence?.hasSubmittedPrompt ?? false;
+
+  const { myAssignment, prompts, scores, promptBreakdowns } = roundData;
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
@@ -117,7 +135,9 @@ function GameRoom({ code }: { code: string }) {
         guess,
       ] as unknown as Storage["currentGuesses"]);
     } else {
-      storage.set("currentGuesses", [guess] as unknown as Storage["currentGuesses"]);
+      storage.set("currentGuesses", [
+        guess,
+      ] as unknown as Storage["currentGuesses"]);
     }
   }, []);
 
@@ -134,38 +154,42 @@ function GameRoom({ code }: { code: string }) {
 
   // Reset round-specific state whenever we enter "prompting" (including Play Again)
   const prevPhaseRef = useRef(gamePhase);
+
   useEffect(() => {
-    if (gamePhase === PHASE.PROMPTING && prevPhaseRef.current !== PHASE.PROMPTING) {
-      setMyAssignment(null);
-      setFetchingAssignment(false);
-      setHasSubmittedPrompt(false);
-      setMyPresence({ hasSubmittedPrompt: false });
-      setPrompts(null);
-      setScores(null);
-      setPromptBreakdowns(null);
+    if (
+      gamePhase === PHASE.PROMPTING &&
+      prevPhaseRef.current !== PHASE.PROMPTING
+    ) {
+      fetchingAssignmentRef.current = false;
+      startTransition(() => {
+        setRoundData(initialRoundData);
+        setMyPresence({ hasSubmittedPrompt: false });
+      });
     }
     prevPhaseRef.current = gamePhase;
-  }, [gamePhase]);
+  }, [gamePhase, initialRoundData, setMyPresence]);
 
   // Fetch assignment when phase changes to "prompting"
   useEffect(() => {
-    if (gamePhase === PHASE.PROMPTING && !myAssignment && !fetchingAssignment) {
-      setFetchingAssignment(true);
+    if (
+      gamePhase === PHASE.PROMPTING &&
+      !myAssignment &&
+      !fetchingAssignmentRef.current
+    ) {
+      fetchingAssignmentRef.current = true;
       fetch(`/api/games/${code}/my-assignment`)
         .then((res) => res.json())
         .then((data) => {
           if (data.promptId) {
-            setMyAssignment(data);
-            setHasSubmittedPrompt(false);
+            setRoundData((prev) => ({ ...prev, myAssignment: data }));
           }
         })
         .catch((e) => console.error("Failed to fetch assignment:", e))
-        .finally(() => setFetchingAssignment(false));
+        .finally(() => {
+          fetchingAssignmentRef.current = false;
+        });
     }
-    if (gamePhase !== PHASE.PROMPTING && gamePhase !== PHASE.GENERATING) {
-      setMyAssignment(null);
-    }
-  }, [gamePhase, code, myAssignment, fetchingAssignment]);
+  }, [gamePhase, code, myAssignment]);
 
   // Fetch prompts from DB when phase changes to "guessing"
   useEffect(() => {
@@ -173,12 +197,10 @@ function GameRoom({ code }: { code: string }) {
       fetch(`/api/games/${code}/round-prompts`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.prompts) setPrompts(data.prompts);
+          if (data.prompts)
+            setRoundData((prev) => ({ ...prev, prompts: data.prompts }));
         })
         .catch((e) => console.error("Failed to fetch prompts:", e));
-    }
-    if (gamePhase === PHASE.LOBBY) {
-      setPrompts(null);
     }
   }, [gamePhase, code, prompts]);
 
@@ -188,14 +210,15 @@ function GameRoom({ code }: { code: string }) {
       fetch(`/api/games/${code}/scores`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.scores) setScores(data.scores);
-          if (data.promptBreakdowns) setPromptBreakdowns(data.promptBreakdowns);
+          if (data.scores || data.promptBreakdowns) {
+            setRoundData((prev) => ({
+              ...prev,
+              scores: data.scores ?? prev.scores,
+              promptBreakdowns: data.promptBreakdowns ?? prev.promptBreakdowns,
+            }));
+          }
         })
         .catch((e) => console.error("Failed to fetch scores:", e));
-    }
-    if (gamePhase === PHASE.LOBBY) {
-      setScores(null);
-      setPromptBreakdowns(null);
     }
   }, [gamePhase, code, scores]);
 
@@ -209,9 +232,6 @@ function GameRoom({ code }: { code: string }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
-    setPrompts(null);
-    setScores(null);
-    setPromptBreakdowns(null);
     setMyPresence({ hasSubmittedPrompt: false });
     setGamePhase(PHASE.PROMPTING);
     setTimerEndsAt(Date.now() + 60000);
@@ -224,9 +244,11 @@ function GameRoom({ code }: { code: string }) {
   const promptsRef = useRef(prompts);
 
   // Keep refs in sync
-  gamePhaseRef.current = gamePhase;
-  currentPromptIndexRef.current = currentPromptIndex;
-  promptsRef.current = prompts;
+  useEffect(() => {
+    gamePhaseRef.current = gamePhase;
+    currentPromptIndexRef.current = currentPromptIndex;
+    promptsRef.current = prompts;
+  }, [gamePhase, currentPromptIndex, prompts]);
 
   const handleTimerEnd = useCallback(async () => {
     if (phaseTransitionRef.current) return;
@@ -265,7 +287,7 @@ function GameRoom({ code }: { code: string }) {
     }
 
     phaseTransitionRef.current = false;
-  }, [code]);
+  }, [code, setGamePhase, setTimerEndsAt, setCurrentPromptIndex, clearGuesses]);
 
   useEffect(() => {
     if (!isHost || !timerEndsAt) return;
@@ -284,15 +306,13 @@ function GameRoom({ code }: { code: string }) {
   };
 
   const handlePlayAgain = async () => {
-    const allClerkIds = [
-      self?.id,
-      ...others.map((o) => o.id),
-    ].filter(Boolean) as string[];
+    const allClerkIds = [self?.id, ...others.map((o) => o.id)].filter(
+      Boolean,
+    ) as string[];
     await handleStart(allClerkIds);
   };
 
   const handlePromptSubmitted = () => {
-    setHasSubmittedPrompt(true);
     setMyPresence({ hasSubmittedPrompt: true });
   };
 
@@ -303,11 +323,16 @@ function GameRoom({ code }: { code: string }) {
     others.every((o) => o.presence.hasSubmittedPrompt);
 
   useEffect(() => {
-    if (isHost && allSubmitted && timerEndsAt && timerEndsAt > Date.now() + 500) {
+    if (
+      isHost &&
+      allSubmitted &&
+      timerEndsAt &&
+      timerEndsAt > Date.now() + 500
+    ) {
       // Expire the timer immediately — the existing timer effect will pick it up
       setTimerEndsAt(Date.now());
     }
-  }, [isHost, allSubmitted]);
+  }, [isHost, allSubmitted, timerEndsAt, setTimerEndsAt]);
 
   if (!storageLoaded) {
     return (
@@ -335,16 +360,21 @@ function GameRoom({ code }: { code: string }) {
         />
       )}
       <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-between">
-        <a href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
+        <Link
+          href="/"
+          className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
+        >
           Draw<span className="text-riso-teal">lulu</span>
-        </a>
+        </Link>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{myPresence?.username}</span>
           {user?.imageUrl && (
-            <img
+            <Image
               src={user.imageUrl}
               alt=""
               className="h-8 w-8 rounded-full"
+              width={32}
+              height={32}
             />
           )}
         </div>

@@ -5,6 +5,7 @@ import { useStorage, useSelf } from "@/liveblocks.config";
 import { Timer } from "./Timer";
 import type { GuessEntry } from "@/liveblocks.config";
 import type { PromptEntry } from "@/app/game/[code]/page";
+import Image from "next/image";
 
 type GuessingPhaseProps = {
   roomCode: string;
@@ -99,11 +100,13 @@ export function GuessingPhase({
       </div>
 
       {currentPrompt.imageUrl ? (
-        <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_theme(colors.gray.900/0.1)]">
-          <img
+        <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_--theme(--color-gray-900/0.1)]">
+          <Image
             src={currentPrompt.imageUrl}
             alt="AI generated image"
-            className="max-w-full max-h-[400px] object-contain"
+            className="max-w-full max-h-100 object-contain"
+            width={400}
+            height={400}
           />
         </div>
       ) : (
@@ -139,7 +142,7 @@ export function GuessingPhase({
           <button
             onClick={handleGuess}
             disabled={!guessText.trim() || submitting}
-            className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
           >
             Guess
           </button>
@@ -162,9 +165,7 @@ export function GuessingPhase({
               >
                 <span className="font-medium">{g.username}:</span>{" "}
                 {g.isCorrect ? (
-                  <span>
-                    Guessed correctly! (+{g.pointsAwarded}pts)
-                  </span>
+                  <span>Guessed correctly! (+{g.pointsAwarded}pts)</span>
                 ) : (
                   <span>{g.guessText}</span>
                 )}

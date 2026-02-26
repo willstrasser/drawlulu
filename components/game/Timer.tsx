@@ -9,14 +9,12 @@ export function Timer() {
 
   useEffect(() => {
     if (!timerEndsAt) {
-      setSecondsLeft(null);
       return;
     }
-
     const update = () => {
       const remaining = Math.max(
         0,
-        Math.ceil((timerEndsAt - Date.now()) / 1000)
+        Math.ceil((timerEndsAt - Date.now()) / 1000),
       );
       setSecondsLeft(remaining);
     };
@@ -25,6 +23,11 @@ export function Timer() {
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [timerEndsAt]);
+
+  if (!timerEndsAt) {
+    setSecondsLeft(null);
+    return;
+  }
 
   if (secondsLeft === null) return null;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { PlayerScore, PromptBreakdown } from "@/app/game/[code]/page";
+import Image from "next/image";
 
 type ScoreboardProps = {
   isHost: boolean;
@@ -9,7 +10,12 @@ type ScoreboardProps = {
   onPlayAgain: () => void;
 };
 
-export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: ScoreboardProps) {
+export function Scoreboard({
+  isHost,
+  scores,
+  promptBreakdowns,
+  onPlayAgain,
+}: ScoreboardProps) {
   const sortedScores = scores
     ? [...scores].sort((a, b) => b.score - a.score)
     : [];
@@ -52,9 +58,13 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
               >
                 #{i + 1}
               </span>
-              <span className="font-medium text-gray-900">{player.username}</span>
+              <span className="font-medium text-gray-900">
+                {player.username}
+              </span>
             </div>
-            <span className="text-xl font-bold text-gray-900">{player.score}pts</span>
+            <span className="text-xl font-bold text-gray-900">
+              {player.score}pts
+            </span>
           </div>
         ))}
       </div>
@@ -73,10 +83,12 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
               >
                 <div className="flex items-center gap-3">
                   {b.imageUrl && (
-                    <img
+                    <Image
                       src={b.imageUrl}
                       alt=""
                       className="h-14 w-14 rounded-lg object-cover"
+                      width={56}
+                      height={56}
                     />
                   )}
                   <div className="flex-1 min-w-0">
@@ -87,11 +99,15 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
                     </p>
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-600">
-                        Prompter bonus: <span className="text-gray-900 font-medium">{b.prompterPoints}pts</span>
+                        Prompter bonus:{" "}
+                        <span className="text-gray-900 font-medium">
+                          {b.prompterPoints}pts
+                        </span>
                       </span>
                       {b.forbiddenWordsUsed.length > 0 && (
                         <span className="text-riso-red">
-                          ({b.forbiddenWordsUsed.length} taboo word{b.forbiddenWordsUsed.length > 1 ? "s" : ""} used)
+                          ({b.forbiddenWordsUsed.length} taboo word
+                          {b.forbiddenWordsUsed.length > 1 ? "s" : ""} used)
                         </span>
                       )}
                     </div>
@@ -101,17 +117,30 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
                 {b.correctGuesses.length > 0 ? (
                   <div className="pl-2 space-y-1">
                     {b.correctGuesses.map((g, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between text-sm"
+                      >
                         <span className="text-gray-700">
-                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}{" "}
+                          {i === 0
+                            ? "🥇"
+                            : i === 1
+                              ? "🥈"
+                              : i === 2
+                                ? "🥉"
+                                : `#${i + 1}`}{" "}
                           {g.username}
                         </span>
-                        <span className="text-riso-teal font-medium">+{g.points}pts</span>
+                        <span className="text-riso-teal font-medium">
+                          +{g.points}pts
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 pl-2">No correct guesses</p>
+                  <p className="text-sm text-gray-500 pl-2">
+                    No correct guesses
+                  </p>
                 )}
               </div>
             ))}
@@ -122,7 +151,7 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
       {isHost ? (
         <button
           onClick={onPlayAgain}
-          className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
+          className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
         >
           Play Again
         </button>

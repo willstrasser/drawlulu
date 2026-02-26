@@ -35,7 +35,8 @@ export function DevPanel({
   const currentGuesses = useStorage((root) => root.currentGuesses);
 
   const isHost = self?.id === hostId;
-  const timerActive = timerEndsAt !== null && timerEndsAt > Date.now();
+  const timerActive =
+    timerEndsAt !== null && timerEndsAt > new Date().getTime();
 
   if (collapsed) {
     return (
@@ -74,7 +75,7 @@ export function DevPanel({
             label="Timer"
             value={
               timerActive
-                ? `${Math.ceil((timerEndsAt! - Date.now()) / 1000)}s`
+                ? `${Math.ceil((timerEndsAt! - new Date().getTime()) / 1000)}s`
                 : "off"
             }
           />

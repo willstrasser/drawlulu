@@ -1,6 +1,7 @@
 "use client";
 
 import { useOthers, useSelf } from "@/liveblocks.config";
+import Image from "next/image";
 
 export function PlayerList() {
   const others = useOthers();
@@ -15,17 +16,19 @@ export function PlayerList() {
         {self && (
           <li className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2">
             {self.info?.imageUrl && (
-              <img
+              <Image
                 src={self.info.imageUrl as string}
                 alt=""
                 className="h-6 w-6 rounded-full"
+                width={24}
+                height={24}
               />
             )}
-            <span className="font-medium">
-              {self.presence.username} (you)
-            </span>
+            <span className="font-medium">{self.presence.username} (you)</span>
             {self.presence.isReady && (
-              <span className="ml-auto text-riso-teal text-xs font-bold">Ready</span>
+              <span className="ml-auto text-riso-teal text-xs font-bold">
+                Ready
+              </span>
             )}
           </li>
         )}
@@ -35,15 +38,19 @@ export function PlayerList() {
             className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2"
           >
             {other.info?.imageUrl && (
-              <img
+              <Image
                 src={other.info.imageUrl as string}
                 alt=""
                 className="h-6 w-6 rounded-full"
+                width={24}
+                height={24}
               />
             )}
             <span>{other.presence.username}</span>
             {other.presence.isReady && (
-              <span className="ml-auto text-riso-teal text-xs font-bold">Ready</span>
+              <span className="ml-auto text-riso-teal text-xs font-bold">
+                Ready
+              </span>
             )}
           </li>
         ))}
