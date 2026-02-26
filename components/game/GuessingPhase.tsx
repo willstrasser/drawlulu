@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useStorage, useSelf } from "@/liveblocks.config";
 import { Timer } from "./Timer";
 import type { GuessEntry } from "@/liveblocks.config";
-import type { PromptEntry } from "@/app/game/[code]/page";
+import type { PromptEntry } from "@/lib/game-types";
 import Image from "next/image";
 
 type GuessingPhaseProps = {

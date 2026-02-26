@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useStorage, useOthers, useSelf } from "@/liveblocks.config";
 import { PHASE } from "@/liveblocks.config";
 import type { GamePhase } from "@/liveblocks.config";
-import type { PromptEntry } from "@/app/game/[code]/page";
+import type { PromptEntry } from "@/lib/game-types";
 
 type DevPanelProps = {
   code: string;

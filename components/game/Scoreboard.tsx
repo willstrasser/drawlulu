@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlayerScore, PromptBreakdown } from "@/app/game/[code]/page";
+import type { PlayerScore, PromptBreakdown } from "@/lib/game-types";
 import Image from "next/image";
 
 type ScoreboardProps = {
