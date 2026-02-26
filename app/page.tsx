@@ -44,13 +44,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-end">
+    <div className="relative z-10 min-h-screen text-gray-900 flex flex-col">
+      <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-end">
         {isSignedIn ? (
           <UserButton />
         ) : (
           <SignInButton mode="modal">
-            <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-medium transition-colors">
+            <button className="px-4 py-2 bg-white/60 hover:bg-white/80 border-2 border-gray-900/10 rounded-lg text-sm font-medium transition-colors">
               Sign In
             </button>
           </SignInButton>
@@ -60,9 +60,9 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center justify-center p-8 gap-12">
         <div className="text-center">
           <h2 className="text-9xl font-bold mb-4">
-            Draw<span className="text-green-400">lulu</span>
+            Draw<span className="text-riso-teal">lulu</span>
           </h2>
-          <p className="text-gray-400 text-lg max-w-md">
+          <p className="text-gray-600 text-lg max-w-md">
             Write clever prompts, generate AI images, and guess what your
             friends were trying to draw. Like Taboo meets AI art!
           </p>
@@ -73,15 +73,15 @@ export default function Home() {
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="w-full px-8 py-4 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 rounded-xl font-bold text-lg transition-colors"
+              className="w-full px-8 py-4 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 transition-all"
             >
               {creating ? "Creating..." : "Create Game"}
             </button>
 
             <div className="flex items-center gap-3 w-full">
-              <div className="flex-1 h-px bg-white/10" />
+              <div className="flex-1 h-px bg-gray-900/10" />
               <span className="text-gray-500 text-sm">or</span>
-              <div className="flex-1 h-px bg-white/10" />
+              <div className="flex-1 h-px bg-gray-900/10" />
             </div>
 
             <div className="flex gap-2 w-full">
@@ -92,25 +92,25 @@ export default function Home() {
                 onKeyDown={(e) => e.key === "Enter" && handleJoin()}
                 placeholder="Enter room code"
                 maxLength={6}
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-mono text-center tracking-widest uppercase"
+                className="flex-1 bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 font-mono text-center tracking-widest uppercase"
               />
               <button
                 onClick={handleJoin}
                 disabled={joining || !joinCode.trim()}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold transition-colors"
+                className="px-6 py-3 bg-riso-purple text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
               >
                 {joining ? "..." : "Join"}
               </button>
             </div>
 
             {error && (
-              <p className="text-red-400 text-sm text-center">{error}</p>
+              <p className="text-riso-red text-sm text-center">{error}</p>
             )}
           </div>
         ) : (
           <div className="text-center">
             <SignInButton mode="modal">
-              <button className="px-8 py-4 bg-green-600 hover:bg-green-500 rounded-xl font-bold text-lg transition-colors">
+              <button className="px-8 py-4 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all">
                 Sign In to Play
               </button>
             </SignInButton>

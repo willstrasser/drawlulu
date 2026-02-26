@@ -8,12 +8,12 @@ export function PlayerList() {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+      <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
         Players ({others.length + 1})
       </h3>
       <ul className="space-y-1">
         {self && (
-          <li className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+          <li className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2">
             {self.info?.imageUrl && (
               <img
                 src={self.info.imageUrl as string}
@@ -25,14 +25,14 @@ export function PlayerList() {
               {self.presence.username} (you)
             </span>
             {self.presence.isReady && (
-              <span className="ml-auto text-green-400 text-xs">Ready</span>
+              <span className="ml-auto text-riso-teal text-xs font-bold">Ready</span>
             )}
           </li>
         )}
         {others.map((other) => (
           <li
             key={other.connectionId}
-            className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2"
+            className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2"
           >
             {other.info?.imageUrl && (
               <img
@@ -43,7 +43,7 @@ export function PlayerList() {
             )}
             <span>{other.presence.username}</span>
             {other.presence.isReady && (
-              <span className="ml-auto text-green-400 text-xs">Ready</span>
+              <span className="ml-auto text-riso-teal text-xs font-bold">Ready</span>
             )}
           </li>
         ))}

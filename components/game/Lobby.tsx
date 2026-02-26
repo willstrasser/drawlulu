@@ -39,14 +39,14 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
   return (
     <div className="flex flex-col items-center gap-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2">Game Lobby</h1>
+        <h1 className="text-3xl font-bold mb-2 text-gray-900">Game Lobby</h1>
         <div className="flex items-center justify-center gap-2">
-          <span className="text-gray-400">Room Code:</span>
-          <span className="text-2xl font-mono font-bold tracking-widest bg-white/10 px-4 py-2 rounded-lg">
+          <span className="text-gray-600">Room Code:</span>
+          <span className="text-2xl font-mono font-bold tracking-widest bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-4 py-2 rounded-lg">
             {roomCode}
           </span>
         </div>
-        <p className="text-gray-400 text-sm mt-2">
+        <p className="text-gray-600 text-sm mt-2">
           Share this code with friends to join
         </p>
       </div>
@@ -56,7 +56,7 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
       </div>
 
       <div className="w-full max-w-sm">
-        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide text-center">
+        <h3 className="text-sm font-medium text-gray-600 mb-3 uppercase tracking-wide text-center">
           {isHost ? "Choose a Category" : "Category"}
         </h3>
         <div className="flex flex-wrap justify-center gap-2">
@@ -65,12 +65,12 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
               key={cat}
               onClick={() => isHost && onSelectCategory(cat)}
               disabled={!isHost}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 ${
                 selectedCategory === cat
-                  ? "bg-green-600 text-white"
+                  ? "bg-riso-teal text-white border-gray-900"
                   : isHost
-                    ? "bg-white/10 text-gray-300 hover:bg-white/20"
-                    : "bg-white/5 text-gray-500 cursor-default"
+                    ? "bg-riso-purple/10 border-riso-purple text-riso-purple hover:bg-riso-purple/20"
+                    : "bg-white/60 border-gray-900/10 text-gray-500 cursor-default"
               }`}
             >
               {cat}
@@ -88,7 +88,7 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
         <button
           onClick={handleStart}
           disabled={!canStart || starting}
-          className="px-8 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-xl font-bold text-lg transition-colors"
+          className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
         >
           {starting
             ? "Starting..."
@@ -99,7 +99,7 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
                 : "Start Game"}
         </button>
       ) : (
-        <p className="text-gray-400">Waiting for host to start the game...</p>
+        <p className="text-gray-600">Waiting for host to start the game...</p>
       )}
     </div>
   );

@@ -312,10 +312,10 @@ function GameRoom({ code }: { code: string }) {
 
   if (!storageLoaded) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
+      <div className="relative z-10 min-h-screen text-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-400">Connecting to room...</p>
+          <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600">Connecting to room...</p>
         </div>
       </div>
     );
@@ -326,7 +326,7 @@ function GameRoom({ code }: { code: string }) {
     (user?.id && DEV_PANEL_USER_IDS.has(user.id));
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="relative z-10 min-h-screen text-gray-900">
       {showDevPanel && (
         <DevPanel
           code={code}
@@ -335,12 +335,12 @@ function GameRoom({ code }: { code: string }) {
           onSetPhase={(phase: GamePhase) => setGamePhase(phase)}
         />
       )}
-      <nav className="border-b border-white/10 px-6 py-3 flex items-center justify-between">
+      <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-between">
         <a href="/" className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity">
-          Draw<span className="text-green-400">lulu</span>
+          Draw<span className="text-riso-teal">lulu</span>
         </a>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">{myPresence?.username}</span>
+          <span className="text-sm text-gray-600">{myPresence?.username}</span>
           {user?.imageUrl && (
             <img
               src={user.imageUrl}
@@ -377,8 +377,8 @@ function GameRoom({ code }: { code: string }) {
 
         {gamePhase === PHASE.PROMPTING && !myAssignment && (
           <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-400">Loading your assignment...</p>
+            <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-gray-600">Loading your assignment...</p>
           </div>
         )}
 

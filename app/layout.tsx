@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
 });
 
@@ -27,9 +22,16 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${spaceGrotesk.variable} font-sans antialiased`}
         >
+          <div className="riso-blobs">
+            <div className="riso-blob riso-blob--teal" />
+            <div className="riso-blob riso-blob--red" />
+            <div className="riso-blob riso-blob--yellow" />
+            <div className="riso-blob riso-blob--purple" />
+          </div>
           {children}
+          <div className="riso-texture" />
         </body>
       </html>
     </ClerkProvider>

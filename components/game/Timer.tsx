@@ -33,7 +33,7 @@ export function Timer() {
   return (
     <div
       className={`text-center text-4xl font-bold tabular-nums ${
-        isUrgent ? "text-red-400 animate-pulse" : "text-white"
+        isUrgent ? "text-riso-red animate-pulse" : "text-gray-900"
       }`}
     >
       {secondsLeft}s

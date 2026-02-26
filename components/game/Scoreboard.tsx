@@ -17,44 +17,44 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
   if (!scores) {
     return (
       <div className="text-center">
-        <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-gray-400">Calculating scores...</p>
+        <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-gray-600">Calculating scores...</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg">
-      <h2 className="text-3xl font-bold">Round Results</h2>
+      <h2 className="text-3xl font-bold text-gray-900">Round Results</h2>
 
       {/* Scores */}
       <div className="w-full space-y-2">
         {sortedScores.map((player, i) => (
           <div
             key={player.userId}
-            className={`flex items-center justify-between px-4 py-3 rounded-xl ${
+            className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${
               i === 0
-                ? "bg-yellow-900/30 border border-yellow-500/50"
-                : "bg-white/5"
+                ? "bg-riso-yellow/30 border-riso-yellow"
+                : "bg-white/60 border-gray-900/10"
             }`}
           >
             <div className="flex items-center gap-3">
               <span
                 className={`text-2xl font-bold ${
                   i === 0
-                    ? "text-yellow-400"
+                    ? "text-riso-red"
                     : i === 1
-                      ? "text-gray-300"
+                      ? "text-gray-500"
                       : i === 2
                         ? "text-amber-600"
-                        : "text-gray-500"
+                        : "text-gray-400"
                 }`}
               >
                 #{i + 1}
               </span>
-              <span className="font-medium">{player.username}</span>
+              <span className="font-medium text-gray-900">{player.username}</span>
             </div>
-            <span className="text-xl font-bold">{player.score}pts</span>
+            <span className="text-xl font-bold text-gray-900">{player.score}pts</span>
           </div>
         ))}
       </div>
@@ -62,14 +62,14 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
       {/* Per-prompt breakdown */}
       {promptBreakdowns && promptBreakdowns.length > 0 && (
         <div className="w-full">
-          <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">
+          <h3 className="text-sm font-medium text-gray-600 mb-3 uppercase tracking-wide">
             Round Summary
           </h3>
           <div className="space-y-4">
             {promptBreakdowns.map((b) => (
               <div
                 key={b.promptId}
-                className="bg-white/5 rounded-xl p-4 space-y-3"
+                className="bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 rounded-xl p-4 space-y-3"
               >
                 <div className="flex items-center gap-3">
                   {b.imageUrl && (
@@ -80,17 +80,17 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-900">
                       {b.prompter}{" "}
                       <span className="text-gray-500 font-normal">drew</span>{" "}
-                      <span className="text-green-400">{b.targetWord}</span>
+                      <span className="text-riso-teal">{b.targetWord}</span>
                     </p>
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-400">
-                        Prompter bonus: <span className="text-white">{b.prompterPoints}pts</span>
+                      <span className="text-gray-600">
+                        Prompter bonus: <span className="text-gray-900 font-medium">{b.prompterPoints}pts</span>
                       </span>
                       {b.forbiddenWordsUsed.length > 0 && (
-                        <span className="text-red-400">
+                        <span className="text-riso-red">
                           ({b.forbiddenWordsUsed.length} taboo word{b.forbiddenWordsUsed.length > 1 ? "s" : ""} used)
                         </span>
                       )}
@@ -102,11 +102,11 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
                   <div className="pl-2 space-y-1">
                     {b.correctGuesses.map((g, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-300">
+                        <span className="text-gray-700">
                           {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}{" "}
                           {g.username}
                         </span>
-                        <span className="text-green-400 font-medium">+{g.points}pts</span>
+                        <span className="text-riso-teal font-medium">+{g.points}pts</span>
                       </div>
                     ))}
                   </div>
@@ -122,12 +122,12 @@ export function Scoreboard({ isHost, scores, promptBreakdowns, onPlayAgain }: Sc
       {isHost ? (
         <button
           onClick={onPlayAgain}
-          className="px-8 py-3 bg-green-600 hover:bg-green-500 rounded-xl font-bold text-lg transition-colors"
+          className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
         >
           Play Again
         </button>
       ) : (
-        <p className="text-gray-400">Waiting for host to start next round...</p>
+        <p className="text-gray-600">Waiting for host to start next round...</p>
       )}
     </div>
   );

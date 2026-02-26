@@ -36,8 +36,8 @@ export function GuessingPhase({
   if (!prompts || prompts.length === 0) {
     return (
       <div className="text-center">
-        <div className="animate-spin h-8 w-8 border-4 border-green-400 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-gray-400">Loading images...</p>
+        <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+        <p className="text-gray-600">Loading images...</p>
       </div>
     );
   }
@@ -86,20 +86,20 @@ export function GuessingPhase({
 
       <div className="text-center">
         {category && (
-          <span className="text-xs font-medium uppercase tracking-wide text-green-400 bg-green-400/10 px-3 py-1 rounded-full">
+          <span className="text-xs font-medium uppercase tracking-wide text-riso-teal bg-riso-teal/10 px-3 py-1 rounded-full border border-riso-teal/30">
             {category}
           </span>
         )}
-        <p className="text-gray-400 text-sm mt-2">
+        <p className="text-gray-600 text-sm mt-2">
           Image {currentPromptIndex + 1} of {prompts.length} — by{" "}
-          <span className="font-medium text-white">
+          <span className="font-medium text-gray-900">
             {currentPrompt.username}
           </span>
         </p>
       </div>
 
       {currentPrompt.imageUrl ? (
-        <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+        <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_theme(colors.gray.900/0.1)]">
           <img
             src={currentPrompt.imageUrl}
             alt="AI generated image"
@@ -107,24 +107,24 @@ export function GuessingPhase({
           />
         </div>
       ) : (
-        <div className="w-full h-64 bg-white/5 rounded-xl flex items-center justify-center text-gray-500">
+        <div className="w-full h-64 bg-white/60 rounded-xl border-2 border-gray-900/10 flex items-center justify-center text-gray-500">
           No image generated
         </div>
       )}
 
       {isMyPrompt ? (
-        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 text-center">
-          <p className="text-blue-300">
+        <div className="bg-riso-purple/10 border-2 border-riso-purple/30 rounded-lg p-4 text-center">
+          <p className="text-riso-purple">
             This is your image! The target was:{" "}
             <span className="font-bold">{currentPrompt.targetWord}</span>
           </p>
-          <p className="text-blue-400 text-sm mt-1">
+          <p className="text-riso-purple/70 text-sm mt-1">
             Watch others try to guess...
           </p>
         </div>
       ) : hasGuessedCorrectly ? (
-        <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4 text-center">
-          <p className="text-green-300 font-bold">You guessed correctly!</p>
+        <div className="bg-riso-teal/10 border-2 border-riso-teal/30 rounded-lg p-4 text-center">
+          <p className="text-riso-teal font-bold">You guessed correctly!</p>
         </div>
       ) : (
         <div className="flex gap-2 w-full">
@@ -134,12 +134,12 @@ export function GuessingPhase({
             onChange={(e) => setGuessText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleGuess()}
             placeholder="Type your guess..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+            className="flex-1 bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50"
           />
           <button
             onClick={handleGuess}
             disabled={!guessText.trim() || submitting}
-            className="px-6 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg font-bold transition-colors"
+            className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
           >
             Guess
           </button>
@@ -149,15 +149,15 @@ export function GuessingPhase({
       {/* Live guess feed */}
       {currentGuesses && currentGuesses.length > 0 && (
         <div className="w-full">
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Guesses</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-2">Guesses</h3>
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {[...currentGuesses].reverse().map((g, i) => (
               <div
                 key={i}
                 className={`px-3 py-1.5 rounded text-sm ${
                   g.isCorrect
-                    ? "bg-green-900/30 border border-green-500/30 text-green-300"
-                    : "bg-white/5 text-gray-400"
+                    ? "bg-riso-teal/10 border-2 border-riso-teal/30 text-riso-teal"
+                    : "bg-white/60 text-gray-600"
                 }`}
               >
                 <span className="font-medium">{g.username}:</span>{" "}

@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-riso-red: #FF5E5B;
+  --color-riso-teal: #00CECB;
+  --color-riso-yellow: #FFED66;
+  --color-riso-purple: #9B5DE5;
+  --color-riso-cream: #F7F5E6;
+  --font-sans: var(--font-space-grotesk);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    background-color: #F7F5E6;
+    color: #171717;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Riso noise texture overlay */
+.riso-texture {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.03;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Floating blobs */
+.riso-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.riso-blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.3;
+  filter: blur(60px);
+  animation: float 20s ease-in-out infinite;
+}
+
+.riso-blob--teal {
+  width: 300px;
+  height: 300px;
+  background-color: #00CECB;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.riso-blob--red {
+  width: 250px;
+  height: 250px;
+  background-color: #FF5E5B;
+  top: 60%;
+  right: 10%;
+  animation-delay: -5s;
+}
+
+.riso-blob--yellow {
+  width: 280px;
+  height: 280px;
+  background-color: #FFED66;
+  bottom: 10%;
+  left: 30%;
+  animation-delay: -10s;
+}
+
+.riso-blob--purple {
+  width: 220px;
+  height: 220px;
+  background-color: #9B5DE5;
+  top: 30%;
+  right: 30%;
+  animation-delay: -15s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.05);
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(0.95);
+  }
+  75% {
+    transform: translate(20px, 20px) scale(1.02);
+  }
 }
