@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "**.fal.media",
+      },
+      {
+        protocol: "https",
         hostname: "img.clerk.com",
       },
     ],

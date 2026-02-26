@@ -1,9 +1,10 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, users } from "@/lib/db/schema";
+import { games } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { PHASE } from "@/lib/phases";
+import { ensureUser } from "@/lib/ensure-user";
 
 export async function POST(
   _request: Request,
@@ -15,27 +16,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const clerkUser = await currentUser();
-  if (!clerkUser) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  // Upsert user
-  let [dbUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId));
-
-  if (!dbUser) {
-    [dbUser] = await db
-      .insert(users)
-      .values({
-        clerkId,
-        username: clerkUser.username || clerkUser.firstName || "Player",
-        imageUrl: clerkUser.imageUrl,
-      })
-      .returning();
-  }
+  await ensureUser(clerkId);
 
   // Check game exists and is in lobby
   const [game] = await db
