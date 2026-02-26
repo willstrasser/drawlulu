@@ -271,12 +271,11 @@ function GameRoom({ code }: { code: string }) {
     if (!isHost || !timerEndsAt) return;
 
     const timeLeft = timerEndsAt - Date.now();
-    if (timeLeft <= 0) {
-      handleTimerEnd();
-      return;
-    }
-
-    const timeout = setTimeout(handleTimerEnd, timeLeft);
+    // Always use setTimeout — even when expired — to defer the mutation call
+    // to a separate macrotask. This avoids calling mutations synchronously in
+    // the same React effect cycle that just wrote to Liveblocks storage (e.g.
+    // the allSubmitted early-skip), which can throw "storage not loaded".
+    const timeout = setTimeout(handleTimerEnd, Math.max(0, timeLeft));
     return () => clearTimeout(timeout);
   }, [isHost, timerEndsAt, handleTimerEnd]);
 
