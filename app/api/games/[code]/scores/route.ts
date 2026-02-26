@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, prompts, guesses, users } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getPrompterScore } from "@/lib/scoring";
 
 export async function GET(
@@ -29,25 +29,41 @@ export async function GET(
     .from(prompts)
     .where(eq(prompts.roundId, game.currentRoundId));
 
+  // Batch-load all guesses for this round's prompts in a single query
+  const promptIds = roundPrompts.map((p) => p.id);
+  const allGuesses = promptIds.length > 0
+    ? await db.select().from(guesses).where(inArray(guesses.promptId, promptIds))
+    : [];
+  const guessesByPromptId = new Map<string, (typeof allGuesses)>();
+  for (const g of allGuesses) {
+    const list = guessesByPromptId.get(g.promptId) ?? [];
+    list.push(g);
+    guessesByPromptId.set(g.promptId, list);
+  }
+
+  // Batch-load all users (prompters + guessers) in a single query
+  const allUserIds = new Set<string>();
+  for (const p of roundPrompts) allUserIds.add(p.userId);
+  for (const g of allGuesses) allUserIds.add(g.userId);
+  const userIds = [...allUserIds];
+  const userRows = userIds.length > 0
+    ? await db.select().from(users).where(inArray(users.id, userIds))
+    : [];
+  const userMap = new Map(userRows.map((u) => [u.id, u]));
+
   const scoreMap: Record<string, { username: string; score: number }> = {};
 
   const promptBreakdowns = [];
 
   for (const prompt of roundPrompts) {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, prompt.userId));
+    const user = userMap.get(prompt.userId);
     if (!user) continue;
 
     if (!scoreMap[user.clerkId]) {
       scoreMap[user.clerkId] = { username: user.username, score: 0 };
     }
 
-    const promptGuesses = await db
-      .select()
-      .from(guesses)
-      .where(eq(guesses.promptId, prompt.id));
+    const promptGuesses = guessesByPromptId.get(prompt.id) ?? [];
 
     const correctGuesses = promptGuesses.filter((g) => g.isCorrect);
     const anyCorrect = correctGuesses.length > 0;
@@ -58,10 +74,7 @@ export async function GET(
 
     const guessDetails = [];
     for (const guess of promptGuesses) {
-      const [guesser] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, guess.userId));
+      const guesser = userMap.get(guess.userId);
       if (!guesser) continue;
 
       if (!scoreMap[guesser.clerkId]) {
