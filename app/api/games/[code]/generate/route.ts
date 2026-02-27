@@ -27,10 +27,15 @@ export async function POST(
     .from(prompts)
     .where(eq(prompts.roundId, game.currentRoundId));
 
+  const MOCK_FAL_IMAGE = "https://placehold.co/512x512.png";
+
   const results = await Promise.allSettled(
     roundPrompts.map(async (p) => {
       if (!p.sanitizedPrompt) return null;
-      const imageUrl = await generateImage(p.sanitizedPrompt);
+      const imageUrl =
+        process.env.MOCK_FAL === "true"
+          ? MOCK_FAL_IMAGE
+          : await generateImage(p.sanitizedPrompt);
       await db.update(prompts).set({ imageUrl }).where(eq(prompts.id, p.id));
       return { promptId: p.id, imageUrl };
     }),
