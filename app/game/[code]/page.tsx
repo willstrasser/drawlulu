@@ -12,6 +12,7 @@ import {
 import { PHASE } from "@/liveblocks.config";
 import type { GuessEntry, Storage } from "@/liveblocks.config";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Lobby } from "@/components/game/Lobby";
 import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
@@ -28,11 +29,14 @@ function GameRoom({ code }: { code: string }) {
   const { user } = useUser();
   const self = useSelf();
   const others = useOthers();
+  const router = useRouter();
   const gamePhase = useStorage((root) => root.gamePhase);
   const hostId = useStorage((root) => root.hostId);
   const currentPromptIndex = useStorage((root) => root.currentPromptIndex);
   const timerEndsAt = useStorage((root) => root.timerEndsAt);
   const selectedCategory = useStorage((root) => root.selectedCategory);
+  const roundNumber = useStorage((root) => root.roundNumber);
+  const newGameCode = useStorage((root) => root.newGameCode);
 
   const [myPresence, setMyPresence] = useMyPresence();
 
@@ -43,12 +47,22 @@ function GameRoom({ code }: { code: string }) {
   const storageLoaded = gamePhase !== null;
 
   const [categories, setCategories] = useState<string[]>([]);
+  // Authoritative host Clerk ID fetched from the DB — eliminates the race
+  // condition where any player who connects first could win the hostId write.
+  const [hostClerkId, setHostClerkId] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
       .then((d) => setCategories(d.categories ?? []));
   }, []);
+
+  useEffect(() => {
+    fetch(`/api/games/${code}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.hostClerkId) setHostClerkId(d.hostClerkId); })
+      .catch(() => {/* non-critical */});
+  }, [code]);
 
   // Set username on join
   useEffect(() => {
@@ -83,6 +97,14 @@ function GameRoom({ code }: { code: string }) {
     storage.set("selectedCategory", category);
   }, []);
 
+  const setRoundNumber = useMutation(({ storage }, n: number) => {
+    storage.set("roundNumber", n);
+  }, []);
+
+  const setNewGameCode = useMutation(({ storage }, code: string) => {
+    storage.set("newGameCode", code);
+  }, []);
+
   const addGuess = useMutation(({ storage }, guess: GuessEntry) => {
     const currentGuesses = storage.get("currentGuesses");
     if (Array.isArray(currentGuesses)) {
@@ -101,14 +123,15 @@ function GameRoom({ code }: { code: string }) {
     storage.set("currentGuesses", [] as unknown as Storage["currentGuesses"]);
   }, []);
 
-  // Set host on first join
+  // Set host — only runs when the API-verified hostClerkId confirms this user
+  // is the actual host, avoiding the first-writer race condition.
   useEffect(() => {
-    if (storageLoaded && self && !hostId) {
+    if (storageLoaded && hostClerkId && self?.id === hostClerkId) {
       setHostIdMutation(self.id as string);
     }
-  }, [storageLoaded, self, hostId, setHostIdMutation]);
+  }, [storageLoaded, self, hostClerkId, setHostIdMutation]);
 
-  const { myAssignment, prompts, scores, promptBreakdowns } = useRoundData({
+  const { myAssignment, prompts, roundScores, cumulativeScores, promptBreakdowns } = useRoundData({
     gamePhase,
     code,
     setMyPresence,
@@ -137,10 +160,25 @@ function GameRoom({ code }: { code: string }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
+    setRoundNumber(data.roundNumber);
     setMyPresence({ hasSubmittedPrompt: false });
     setGamePhase(PHASE.PROMPTING);
     setTimerEndsAt(Date.now() + 60000);
   };
+
+  const handleNewGame = async () => {
+    const res = await fetch("/api/games", { method: "POST" });
+    const { roomCode } = await res.json();
+    setNewGameCode(roomCode);
+    router.push(`/game/${roomCode}`);
+  };
+
+  // Redirect all non-host players when host starts a new game
+  useEffect(() => {
+    if (newGameCode && newGameCode !== code) {
+      router.push(`/game/${newGameCode}`);
+    }
+  }, [newGameCode, code, router]);
 
   const handleGuessSubmitted = (guess: GuessEntry) => {
     addGuess(guess);
@@ -201,12 +239,17 @@ function GameRoom({ code }: { code: string }) {
         />
       )}
       <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-between">
-        <Link
-          href="/"
-          className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
-        >
-          Draw<span className="text-riso-teal">lulu</span>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
+          >
+            Draw<span className="text-riso-teal">lulu</span>
+          </Link>
+          {roundNumber != null && roundNumber > 1 && (
+            <span className="text-sm text-gray-500">Round {roundNumber}</span>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{myPresence?.username}</span>
           {user?.imageUrl && (
@@ -267,9 +310,12 @@ function GameRoom({ code }: { code: string }) {
         {gamePhase === PHASE.SCOREBOARD && (
           <Scoreboard
             isHost={isHost}
-            scores={scores}
+            roundNumber={roundNumber ?? 1}
+            roundScores={roundScores}
+            cumulativeScores={cumulativeScores}
             promptBreakdowns={promptBreakdowns}
             onPlayAgain={handlePlayAgain}
+            onNewGame={handleNewGame}
           />
         )}
       </main>
@@ -299,6 +345,8 @@ export default function GamePage({
         currentGuesses: [] as unknown as Storage["currentGuesses"],
         hostId: "",
         selectedCategory: "",
+        roundNumber: 1,
+        newGameCode: "",
       }}
     >
       <GameRoom code={code} />

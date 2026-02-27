@@ -197,10 +197,10 @@ test("full happy-path round: lobby → prompting → generating → guessing →
   }
 
   // ── SCOREBOARD ────────────────────────────────────────────────────────────
-  await expect(hostPage.getByText("Round Results")).toBeVisible({
+  await expect(hostPage.getByText("Round 1 Results")).toBeVisible({
     timeout: 30_000,
   });
-  await expect(p2Page.getByText("Round Results")).toBeVisible({
+  await expect(p2Page.getByText("Round 1 Results")).toBeVisible({
     timeout: 30_000,
   });
 
@@ -209,7 +209,7 @@ test("full happy-path round: lobby → prompting → generating → guessing →
   await expect(p2Page.getByText(/\d+pts/).first()).toBeVisible();
 
   // ── PLAY AGAIN: must transition directly to PROMPTING (no lobby) ──────────
-  await hostPage.getByRole("button", { name: "Play Again" }).click();
+  await hostPage.getByRole("button", { name: "Next Round" }).click();
 
   await expect(hostPage.getByText("Your target word is:")).toBeVisible({
     timeout: 20_000,

@@ -2,10 +2,9 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, rounds, prompts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, max } from "drizzle-orm";
 import { getWordCardsFromDB } from "@/lib/db/word-cards";
 import { ensureUser } from "@/lib/ensure-user";
-import { PHASE } from "@/lib/phases";
 
 export async function POST(
   request: Request,
@@ -50,12 +49,21 @@ export async function POST(
     playerClerkIds.map((cid) => ensureUser(cid))
   );
 
+  // Query max roundNumber for this game and increment
+  const [{ maxRound }] = await db
+    .select({ maxRound: max(rounds.roundNumber) })
+    .from(rounds)
+    .where(eq(rounds.gameId, game.id));
+
+  const nextRoundNumber = (maxRound ?? 0) + 1;
+
   // Create round
   const [round] = await db
     .insert(rounds)
     .values({
       gameId: game.id,
-      roundNumber: 1,
+      roundNumber: nextRoundNumber,
+      status: "prompting",
     })
     .returning();
 
@@ -77,10 +85,10 @@ export async function POST(
     })
   );
 
-  // Update game status
+  // Update game to active
   await db
     .update(games)
-    .set({ status: PHASE.PROMPTING, currentRoundId: round.id })
+    .set({ status: "active", currentRoundId: round.id })
     .where(eq(games.id, game.id));
 
   // Return prompt assignments keyed by clerkId
@@ -99,6 +107,7 @@ export async function POST(
 
   return NextResponse.json({
     roundId: round.id,
+    roundNumber: nextRoundNumber,
     assignments,
   });
 }

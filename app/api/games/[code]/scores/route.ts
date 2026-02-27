@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, prompts, guesses, users } from "@/lib/db/schema";
+import { games, rounds, prompts, guesses, users } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getPrompterScore } from "@/lib/scoring";
 
@@ -24,15 +24,24 @@ export async function GET(
     return NextResponse.json({ error: "No active round" }, { status: 404 });
   }
 
+  // Get all rounds for this game (for cumulative scores)
+  const allRounds = await db.select().from(rounds).where(eq(rounds.gameId, game.id));
+  const allRoundIds = allRounds.map((r) => r.id);
+
   const roundPrompts = await db
     .select()
     .from(prompts)
     .where(eq(prompts.roundId, game.currentRoundId));
 
-  // Batch-load all guesses for this round's prompts in a single query
-  const promptIds = roundPrompts.map((p) => p.id);
-  const allGuesses = promptIds.length > 0
-    ? await db.select().from(guesses).where(inArray(guesses.promptId, promptIds))
+  // All prompts across all rounds (for cumulative)
+  const allPrompts = allRoundIds.length > 0
+    ? await db.select().from(prompts).where(inArray(prompts.roundId, allRoundIds))
+    : [];
+
+  // Batch-load all guesses for all prompts in a single query
+  const allPromptIds = allPrompts.map((p) => p.id);
+  const allGuesses = allPromptIds.length > 0
+    ? await db.select().from(guesses).where(inArray(guesses.promptId, allPromptIds))
     : [];
   const guessesByPromptId = new Map<string, (typeof allGuesses)>();
   for (const g of allGuesses) {
@@ -43,7 +52,7 @@ export async function GET(
 
   // Batch-load all users (prompters + guessers) in a single query
   const allUserIds = new Set<string>();
-  for (const p of roundPrompts) allUserIds.add(p.userId);
+  for (const p of allPrompts) allUserIds.add(p.userId);
   for (const g of allGuesses) allUserIds.add(g.userId);
   const userIds = [...allUserIds];
   const userRows = userIds.length > 0
@@ -51,46 +60,38 @@ export async function GET(
     : [];
   const userMap = new Map(userRows.map((u) => [u.id, u]));
 
-  const scoreMap: Record<string, { username: string; score: number }> = {};
-
+  // Compute per-round scores and breakdowns using only current-round prompts
+  const roundScoreMap: Record<string, { username: string; score: number }> = {};
   const promptBreakdowns = [];
 
   for (const prompt of roundPrompts) {
     const user = userMap.get(prompt.userId);
     if (!user) continue;
 
-    if (!scoreMap[user.clerkId]) {
-      scoreMap[user.clerkId] = { username: user.username, score: 0 };
+    if (!roundScoreMap[user.clerkId]) {
+      roundScoreMap[user.clerkId] = { username: user.username, score: 0 };
     }
 
     const promptGuesses = guessesByPromptId.get(prompt.id) ?? [];
-
     const correctGuesses = promptGuesses.filter((g) => g.isCorrect);
     const anyCorrect = correctGuesses.length > 0;
-
     const forbiddenCount = (prompt.forbiddenWordsUsed || []).length;
     const prompterScore = getPrompterScore(anyCorrect, forbiddenCount);
-    scoreMap[user.clerkId].score += prompterScore;
+    roundScoreMap[user.clerkId].score += prompterScore;
 
     const guessDetails = [];
     for (const guess of promptGuesses) {
       const guesser = userMap.get(guess.userId);
       if (!guesser) continue;
 
-      if (!scoreMap[guesser.clerkId]) {
-        scoreMap[guesser.clerkId] = {
-          username: guesser.username,
-          score: 0,
-        };
+      if (!roundScoreMap[guesser.clerkId]) {
+        roundScoreMap[guesser.clerkId] = { username: guesser.username, score: 0 };
       }
 
-      scoreMap[guesser.clerkId].score += guess.pointsAwarded;
+      roundScoreMap[guesser.clerkId].score += guess.pointsAwarded;
 
       if (guess.isCorrect) {
-        guessDetails.push({
-          username: guesser.username,
-          points: guess.pointsAwarded,
-        });
+        guessDetails.push({ username: guesser.username, points: guess.pointsAwarded });
       }
     }
 
@@ -105,11 +106,54 @@ export async function GET(
     });
   }
 
-  const scores = Object.entries(scoreMap).map(([userId, data]) => ({
+  // Compute cumulative scores across all rounds
+  const cumulativeScoreMap: Record<string, { username: string; score: number }> = {};
+
+  for (const prompt of allPrompts) {
+    const user = userMap.get(prompt.userId);
+    if (!user) continue;
+
+    if (!cumulativeScoreMap[user.clerkId]) {
+      cumulativeScoreMap[user.clerkId] = { username: user.username, score: 0 };
+    }
+
+    const promptGuesses = guessesByPromptId.get(prompt.id) ?? [];
+    const correctGuesses = promptGuesses.filter((g) => g.isCorrect);
+    const anyCorrect = correctGuesses.length > 0;
+    const forbiddenCount = (prompt.forbiddenWordsUsed || []).length;
+    const prompterScore = getPrompterScore(anyCorrect, forbiddenCount);
+    cumulativeScoreMap[user.clerkId].score += prompterScore;
+
+    for (const guess of promptGuesses) {
+      const guesser = userMap.get(guess.userId);
+      if (!guesser) continue;
+
+      if (!cumulativeScoreMap[guesser.clerkId]) {
+        cumulativeScoreMap[guesser.clerkId] = { username: guesser.username, score: 0 };
+      }
+
+      cumulativeScoreMap[guesser.clerkId].score += guess.pointsAwarded;
+    }
+  }
+
+  const roundScores = Object.entries(roundScoreMap).map(([userId, data]) => ({
     userId,
     username: data.username,
     score: data.score,
   }));
 
-  return NextResponse.json({ scores, promptBreakdowns });
+  const cumulativeScores = Object.entries(cumulativeScoreMap).map(([userId, data]) => ({
+    userId,
+    username: data.username,
+    score: data.score,
+  }));
+
+  const currentRound = allRounds.find((r) => r.id === game.currentRoundId);
+
+  return NextResponse.json({
+    roundNumber: currentRound?.roundNumber ?? 1,
+    roundScores,
+    cumulativeScores,
+    promptBreakdowns,
+  });
 }

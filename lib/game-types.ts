@@ -33,6 +33,7 @@ export type PromptBreakdown = {
 export type RoundData = {
   myAssignment: MyAssignment | null;
   prompts: PromptEntry[] | null;
-  scores: PlayerScore[] | null;
+  roundScores: PlayerScore[] | null;
+  cumulativeScores: PlayerScore[] | null;
   promptBreakdowns: PromptBreakdown[] | null;
 };

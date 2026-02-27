@@ -1,10 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, prompts } from "@/lib/db/schema";
+import { games, rounds, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateImage } from "@/lib/fal";
-import { PHASE } from "@/lib/phases";
 
 export async function POST(
   _request: Request,
@@ -53,9 +52,9 @@ export async function POST(
     .map((r) => r.value!);
 
   await db
-    .update(games)
-    .set({ status: PHASE.GUESSING })
-    .where(eq(games.id, game.id));
+    .update(rounds)
+    .set({ status: "guessing" })
+    .where(eq(rounds.id, game.currentRoundId!));
 
   return NextResponse.json({ generated });
 }

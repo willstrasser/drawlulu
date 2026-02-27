@@ -7,7 +7,6 @@ import {
   boolean,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { PHASE } from "@/lib/phases";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -24,10 +23,10 @@ export const games = pgTable("games", {
     .notNull()
     .references(() => users.id),
   status: text("status", {
-    enum: ["lobby", "prompting", "generating", "guessing", "scoreboard", "finished"] as const,
+    enum: ["lobby", "active", "finished"] as const,
   })
     .notNull()
-    .default(PHASE.LOBBY),
+    .default("lobby"),
   currentRoundId: uuid("current_round_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -38,6 +37,11 @@ export const rounds = pgTable("rounds", {
     .notNull()
     .references(() => games.id),
   roundNumber: integer("round_number").notNull(),
+  status: text("status", {
+    enum: ["prompting", "generating", "guessing", "scoreboard", "completed"] as const,
+  })
+    .notNull()
+    .default("prompting"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

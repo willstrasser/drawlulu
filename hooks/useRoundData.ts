@@ -15,7 +15,8 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
     () => ({
       myAssignment: null,
       prompts: null,
-      scores: null,
+      roundScores: null,
+      cumulativeScores: null,
       promptBreakdowns: null,
     }),
     [],
@@ -77,21 +78,22 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
 
   // Fetch scores from DB when phase changes to "scoreboard"
   useEffect(() => {
-    if (gamePhase === PHASE.SCOREBOARD && !roundData.scores) {
+    if (gamePhase === PHASE.SCOREBOARD && !roundData.roundScores) {
       fetch(`/api/games/${code}/scores`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.scores || data.promptBreakdowns) {
+          if (data.roundScores || data.promptBreakdowns) {
             setRoundData((prev) => ({
               ...prev,
-              scores: (data.scores as PlayerScore[]) ?? prev.scores,
+              roundScores: (data.roundScores as PlayerScore[]) ?? prev.roundScores,
+              cumulativeScores: (data.cumulativeScores as PlayerScore[]) ?? prev.cumulativeScores,
               promptBreakdowns: (data.promptBreakdowns as PromptBreakdown[]) ?? prev.promptBreakdowns,
             }));
           }
         })
         .catch((e) => console.error("Failed to fetch scores:", e));
     }
-  }, [gamePhase, code, roundData.scores]);
+  }, [gamePhase, code, roundData.roundScores]);
 
   return roundData;
 }

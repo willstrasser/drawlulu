@@ -33,6 +33,8 @@ export type Storage = {
   currentGuesses: GuessEntry[];
   hostId: string;
   selectedCategory: string;
+  roundNumber: number;
+  newGameCode: string;
 };
 
 export type UserMeta = {
