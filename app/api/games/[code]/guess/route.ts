@@ -70,28 +70,51 @@ export async function POST(
   const isCorrect =
     guessText.trim().toLowerCase() === prompt.targetWord.trim().toLowerCase();
 
-  // Count existing correct guesses to determine rank
-  let pointsAwarded = 0;
-  if (isCorrect) {
-    const allCorrect = await db
-      .select()
-      .from(guesses)
-      .where(
-        and(eq(guesses.promptId, promptId), eq(guesses.isCorrect, true))
-      );
-    pointsAwarded = getGuesserScore(allCorrect.length);
-  }
+  // Count existing correct guesses to determine rank, then insert — atomic via transaction
+  let guess: typeof guesses.$inferSelect;
 
-  const [guess] = await db
-    .insert(guesses)
-    .values({
-      promptId,
-      userId: dbUser.id,
-      guessText: guessText.trim(),
-      isCorrect,
-      pointsAwarded,
-    })
-    .returning();
+  if (isCorrect) {
+    guess = await db.transaction(async (tx) => {
+      // Lock the prompt row — serializes all concurrent correct guesses for this image
+      await tx
+        .select({ id: prompts.id })
+        .from(prompts)
+        .where(eq(prompts.id, promptId))
+        .for("update");
+
+      const allCorrect = await tx
+        .select()
+        .from(guesses)
+        .where(and(eq(guesses.promptId, promptId), eq(guesses.isCorrect, true)));
+
+      const pts = getGuesserScore(allCorrect.length);
+
+      const [inserted] = await tx
+        .insert(guesses)
+        .values({
+          promptId,
+          userId: dbUser.id,
+          guessText: guessText.trim(),
+          isCorrect: true,
+          pointsAwarded: pts,
+        })
+        .returning();
+
+      return inserted;
+    });
+  } else {
+    const [inserted] = await db
+      .insert(guesses)
+      .values({
+        promptId,
+        userId: dbUser.id,
+        guessText: guessText.trim(),
+        isCorrect: false,
+        pointsAwarded: 0,
+      })
+      .returning();
+    guess = inserted;
+  }
 
   return NextResponse.json({
     isCorrect: guess.isCorrect,
