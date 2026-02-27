@@ -45,3 +45,7 @@ next-env.d.ts
 # Local env overrides (also written by e2e globalSetup)
 .env.local
 .env*.local
+
+# Ephemeral Neon branch files written by scripts/pretest.ts at test-run time
+.neon-branch-url
+.neon-test-branch
