@@ -15,6 +15,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
     "@clerk/nextjs": "^6.37.3",
     "@fal-ai/serverless-client": "^0.15.0",
     "@liveblocks/client": "^3.13.5",

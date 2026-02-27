@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, rounds, prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { getRandomCards } from "@/lib/words";
+import { getWordCardsFromDB } from "@/lib/db/word-cards";
 import { ensureUser } from "@/lib/ensure-user";
 import { PHASE } from "@/lib/phases";
 
@@ -60,7 +60,7 @@ export async function POST(
     .returning();
 
   // Assign random cards to each player
-  const cards = getRandomCards(playerUsers.length, category);
+  const cards = await getWordCardsFromDB(playerUsers.length, category);
 
   const promptEntries = await Promise.all(
     playerUsers.map(async (player, i) => {

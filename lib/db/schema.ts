@@ -5,6 +5,7 @@ import {
   uuid,
   integer,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { PHASE } from "@/lib/phases";
 
@@ -54,6 +55,23 @@ export const prompts = pgTable("prompts", {
   sanitizedPrompt: text("sanitized_prompt"),
   imageUrl: text("image_url"),
   forbiddenWordsUsed: text("forbidden_words_used").array().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const wordCards = pgTable("word_cards", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  objective: text("objective").notNull(),
+  category: text("category").notNull(),
+  taboos: jsonb("taboos")
+    .notNull()
+    .$type<Array<{ word: string; relevancyScore: number }>>(),
+  // relevancyScore: 1–10. 10 = most obvious hint; 1 = obscure/tangential.
+  // Stored for future difficulty modulation — not yet used in gameplay.
+  authorId: uuid("author_id").references(() => users.id),
+  source: text("source", { enum: ["system", "ai_generated", "user"] as const })
+    .notNull()
+    .default("system"),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

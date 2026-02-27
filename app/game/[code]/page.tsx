@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import {
   RoomProvider,
   useMyPresence,
@@ -12,7 +12,6 @@ import {
 import { PHASE } from "@/liveblocks.config";
 import type { GuessEntry, Storage } from "@/liveblocks.config";
 import { useUser } from "@clerk/nextjs";
-import { getCategories } from "@/lib/words";
 import { Lobby } from "@/components/game/Lobby";
 import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
@@ -42,6 +41,14 @@ function GameRoom({ code }: { code: string }) {
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
+
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => setCategories(d.categories ?? []));
+  }, []);
 
   // Set username on join
   useEffect(() => {
@@ -220,7 +227,7 @@ function GameRoom({ code }: { code: string }) {
             roomCode={code}
             isHost={isHost}
             onStart={handleStart}
-            categories={getCategories()}
+            categories={categories}
             selectedCategory={selectedCategory ?? ""}
             onSelectCategory={setSelectedCategory}
           />
