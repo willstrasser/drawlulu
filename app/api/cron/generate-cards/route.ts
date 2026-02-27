@@ -13,6 +13,26 @@ type GeneratedCard = {
   taboos: TabooEntry[];
 };
 
+function isTabooEntry(v: unknown): v is TabooEntry {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    typeof (v as Record<string, unknown>).word === "string" &&
+    typeof (v as Record<string, unknown>).relevancyScore === "number"
+  );
+}
+
+function isGeneratedCard(v: unknown): v is GeneratedCard {
+  if (typeof v !== "object" || v === null) return false;
+  const c = v as Record<string, unknown>;
+  return (
+    typeof c.objective === "string" &&
+    typeof c.category === "string" &&
+    Array.isArray(c.taboos) &&
+    c.taboos.every(isTabooEntry)
+  );
+}
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -46,10 +66,10 @@ For each topic, produce one word card in this exact JSON structure:
 }
 
 Rules:
-- IMPORTANT: Return ONLY a valid JSON array of ${NUM_NEW_CARDS} card objects, no extra text or explanation
 - The "objective" is something a person would draw (a person, movie, show, place, concept, etc.)
 - Taboos are words players CANNOT say when describing the drawing — ordered from most obvious (score 10) to more obscure (score 3)
-- Each taboo word/phrase should be a genuine hint someone might blurt out`,
+- Each taboo word/phrase should be a genuine hint someone might blurt out
+- Your entire response must be ONLY a raw JSON array of ${NUM_NEW_CARDS} objects matching exactly the structure above — no markdown, no code fences, no explanation. It must be directly parseable by JSON.parse().`,
       },
     ],
   });
@@ -71,7 +91,14 @@ Rules:
 
   let cards: GeneratedCard[];
   try {
-    cards = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.every(isGeneratedCard)) {
+      return NextResponse.json(
+        { error: "Response did not match GeneratedCard[]" },
+        { status: 500 },
+      );
+    }
+    cards = parsed;
   } catch (error) {
     console.error("Failed to parse generated cards JSON:", error);
     return NextResponse.json(
