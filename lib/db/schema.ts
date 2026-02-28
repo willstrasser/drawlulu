@@ -10,9 +10,11 @@ import {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
-  clerkId: text("clerk_id").notNull().unique(),
+  clerkId: text("clerk_id").unique(),
   username: text("username").notNull(),
   imageUrl: text("image_url"),
+  oauthProvider: text("oauth_provider"),
+  oauthId: text("oauth_id").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

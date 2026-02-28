@@ -1,17 +1,17 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, rounds, prompts, guesses, users } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getPrompterScore } from "@/lib/scoring";
+import { getUser } from "@/lib/get-user";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -65,11 +65,11 @@ export async function GET(
   const promptBreakdowns = [];
 
   for (const prompt of roundPrompts) {
-    const user = userMap.get(prompt.userId);
-    if (!user) continue;
+    const u = userMap.get(prompt.userId);
+    if (!u) continue;
 
-    if (!roundScoreMap[user.clerkId]) {
-      roundScoreMap[user.clerkId] = { username: user.username, score: 0 };
+    if (!roundScoreMap[u.id]) {
+      roundScoreMap[u.id] = { username: u.username, score: 0 };
     }
 
     const promptGuesses = guessesByPromptId.get(prompt.id) ?? [];
@@ -77,18 +77,18 @@ export async function GET(
     const anyCorrect = correctGuesses.length > 0;
     const forbiddenCount = (prompt.forbiddenWordsUsed || []).length;
     const prompterScore = getPrompterScore(anyCorrect, forbiddenCount);
-    roundScoreMap[user.clerkId].score += prompterScore;
+    roundScoreMap[u.id].score += prompterScore;
 
     const guessDetails = [];
     for (const guess of promptGuesses) {
       const guesser = userMap.get(guess.userId);
       if (!guesser) continue;
 
-      if (!roundScoreMap[guesser.clerkId]) {
-        roundScoreMap[guesser.clerkId] = { username: guesser.username, score: 0 };
+      if (!roundScoreMap[guesser.id]) {
+        roundScoreMap[guesser.id] = { username: guesser.username, score: 0 };
       }
 
-      roundScoreMap[guesser.clerkId].score += guess.pointsAwarded;
+      roundScoreMap[guesser.id].score += guess.pointsAwarded;
 
       if (guess.isCorrect) {
         guessDetails.push({ username: guesser.username, points: guess.pointsAwarded });
@@ -97,7 +97,7 @@ export async function GET(
 
     promptBreakdowns.push({
       promptId: prompt.id,
-      prompter: user.username,
+      prompter: u.username,
       targetWord: prompt.targetWord,
       imageUrl: prompt.imageUrl,
       forbiddenWordsUsed: prompt.forbiddenWordsUsed || [],
@@ -110,11 +110,11 @@ export async function GET(
   const cumulativeScoreMap: Record<string, { username: string; score: number }> = {};
 
   for (const prompt of allPrompts) {
-    const user = userMap.get(prompt.userId);
-    if (!user) continue;
+    const u = userMap.get(prompt.userId);
+    if (!u) continue;
 
-    if (!cumulativeScoreMap[user.clerkId]) {
-      cumulativeScoreMap[user.clerkId] = { username: user.username, score: 0 };
+    if (!cumulativeScoreMap[u.id]) {
+      cumulativeScoreMap[u.id] = { username: u.username, score: 0 };
     }
 
     const promptGuesses = guessesByPromptId.get(prompt.id) ?? [];
@@ -122,17 +122,17 @@ export async function GET(
     const anyCorrect = correctGuesses.length > 0;
     const forbiddenCount = (prompt.forbiddenWordsUsed || []).length;
     const prompterScore = getPrompterScore(anyCorrect, forbiddenCount);
-    cumulativeScoreMap[user.clerkId].score += prompterScore;
+    cumulativeScoreMap[u.id].score += prompterScore;
 
     for (const guess of promptGuesses) {
       const guesser = userMap.get(guess.userId);
       if (!guesser) continue;
 
-      if (!cumulativeScoreMap[guesser.clerkId]) {
-        cumulativeScoreMap[guesser.clerkId] = { username: guesser.username, score: 0 };
+      if (!cumulativeScoreMap[guesser.id]) {
+        cumulativeScoreMap[guesser.id] = { username: guesser.username, score: 0 };
       }
 
-      cumulativeScoreMap[guesser.clerkId].score += guess.pointsAwarded;
+      cumulativeScoreMap[guesser.id].score += guess.pointsAwarded;
     }
   }
 

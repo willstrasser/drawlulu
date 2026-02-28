@@ -59,4 +59,5 @@ export async function cleanGameData(): Promise<void> {
   await sql`DELETE FROM prompts`;
   await sql`DELETE FROM rounds`;
   await sql`DELETE FROM games`;
+  await sql`DELETE FROM users`;
 }

@@ -11,22 +11,22 @@ import {
 } from "@/liveblocks.config";
 import { PHASE } from "@/liveblocks.config";
 import type { GuessEntry, Storage } from "@/liveblocks.config";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { Lobby } from "@/components/game/Lobby";
 import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
 import { GuessingPhase } from "@/components/game/GuessingPhase";
 import { Scoreboard } from "@/components/game/Scoreboard";
-import { DevPanel, DEV_PANEL_USER_IDS } from "@/components/game/DevPanel";
+import { DevPanel } from "@/components/game/DevPanel";
+import { UsernameModal } from "@/components/game/UsernameModal";
 import type { GamePhase } from "@/liveblocks.config";
 import Link from "next/link";
-import Image from "next/image";
 import { useRoundData } from "@/hooks/useRoundData";
 import { useGameTimer } from "@/hooks/useGameTimer";
 
 function GameRoom({ code }: { code: string }) {
-  const { user } = useUser();
+  const { user } = useSession();
   const self = useSelf();
   const others = useOthers();
   const router = useRouter();
@@ -47,9 +47,9 @@ function GameRoom({ code }: { code: string }) {
   const storageLoaded = gamePhase !== null;
 
   const [categories, setCategories] = useState<string[]>([]);
-  // Authoritative host Clerk ID fetched from the DB — eliminates the race
+  // Authoritative host user ID fetched from the DB — eliminates the race
   // condition where any player who connects first could win the hostId write.
-  const [hostClerkId, setHostClerkId] = useState<string>("");
+  const [hostUserId, setHostUserId] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/categories")
@@ -60,7 +60,7 @@ function GameRoom({ code }: { code: string }) {
   useEffect(() => {
     fetch(`/api/games/${code}`)
       .then((r) => r.json())
-      .then((d) => { if (d.hostClerkId) setHostClerkId(d.hostClerkId); })
+      .then((d) => { if (d.hostUserId) setHostUserId(d.hostUserId); })
       .catch(() => {/* non-critical */});
   }, [code]);
 
@@ -68,7 +68,7 @@ function GameRoom({ code }: { code: string }) {
   useEffect(() => {
     if (user) {
       setMyPresence({
-        username: user.username || user.firstName || "Player",
+        username: user.username,
         imageUrl: user.imageUrl,
         isReady: false,
         hasSubmittedPrompt: false,
@@ -123,13 +123,13 @@ function GameRoom({ code }: { code: string }) {
     storage.set("currentGuesses", [] as unknown as Storage["currentGuesses"]);
   }, []);
 
-  // Set host — only runs when the API-verified hostClerkId confirms this user
+  // Set host — only runs when the API-verified hostUserId confirms this user
   // is the actual host, avoiding the first-writer race condition.
   useEffect(() => {
-    if (storageLoaded && hostClerkId && self?.id === hostClerkId) {
+    if (storageLoaded && hostUserId && self?.id === hostUserId) {
       setHostIdMutation(self.id as string);
     }
-  }, [storageLoaded, self, hostClerkId, setHostIdMutation]);
+  }, [storageLoaded, self, hostUserId, setHostIdMutation]);
 
   const { myAssignment, prompts, roundScores, cumulativeScores, promptBreakdowns } = useRoundData({
     gamePhase,
@@ -151,11 +151,11 @@ function GameRoom({ code }: { code: string }) {
   });
 
   // Handle game start (host only)
-  const handleStart = async (playerClerkIds: string[]) => {
+  const handleStart = async (playerUserIds: string[]) => {
     const res = await fetch(`/api/games/${code}/start`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerClerkIds, category: selectedCategory }),
+      body: JSON.stringify({ playerUserIds, category: selectedCategory }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
@@ -185,10 +185,10 @@ function GameRoom({ code }: { code: string }) {
   };
 
   const handlePlayAgain = async () => {
-    const allClerkIds = [self?.id, ...others.map((o) => o.id)].filter(
+    const allUserIds = [self?.id, ...others.map((o) => o.id)].filter(
       Boolean,
     ) as string[];
-    await handleStart(allClerkIds);
+    await handleStart(allUserIds);
   };
 
   const handlePromptSubmitted = () => {
@@ -224,9 +224,7 @@ function GameRoom({ code }: { code: string }) {
     );
   }
 
-  const showDevPanel =
-    process.env.NODE_ENV === "development" ||
-    (user?.id && DEV_PANEL_USER_IDS.has(user.id));
+  const showDevPanel = process.env.NODE_ENV === "development";
 
   return (
     <div className="relative z-10 min-h-screen text-gray-900">
@@ -252,15 +250,6 @@ function GameRoom({ code }: { code: string }) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-600">{myPresence?.username}</span>
-          {user?.imageUrl && (
-            <Image
-              src={user.imageUrl}
-              alt=""
-              className="h-8 w-8 rounded-full"
-              width={32}
-              height={32}
-            />
-          )}
         </div>
       </nav>
 
@@ -323,12 +312,22 @@ function GameRoom({ code }: { code: string }) {
   );
 }
 
-export default function GamePage({
-  params,
-}: {
-  params: Promise<{ code: string }>;
-}) {
-  const { code } = use(params);
+function GamePageInner({ code }: { code: string }) {
+  const { user, loading, refresh } = useSession();
+
+  if (loading) {
+    return (
+      <div className="relative z-10 min-h-screen text-gray-900 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <UsernameModal onComplete={() => refresh()} />
+    );
+  }
 
   return (
     <RoomProvider
@@ -352,4 +351,13 @@ export default function GamePage({
       <GameRoom code={code} />
     </RoomProvider>
   );
+}
+
+export default function GamePage({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}) {
+  const { code } = use(params);
+  return <GamePageInner code={code} />;
 }

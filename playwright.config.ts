@@ -67,10 +67,8 @@ export default defineConfig({
       DATABASE_URL: databaseUrl,
       // Stub FAL — returns a placeholder image URL instantly.
       MOCK_FAL: "true",
-      // Clerk, Liveblocks keys from .env.test (test instances).
-      CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY ?? "",
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "",
+      // iron-session + Liveblocks keys from .env.test (test instances).
+      SESSION_SECRET: process.env.SESSION_SECRET ?? "",
       LIVEBLOCKS_SECRET_KEY: process.env.LIVEBLOCKS_SECRET_KEY ?? "",
     },
   },

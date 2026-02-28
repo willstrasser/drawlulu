@@ -7,7 +7,7 @@ import { useState } from "react";
 type LobbyProps = {
   roomCode: string;
   isHost: boolean;
-  onStart: (playerClerkIds: string[]) => Promise<void>;
+  onStart: (playerUserIds: string[]) => Promise<void>;
   categories: string[];
   selectedCategory: string;
   onSelectCategory: (cat: string) => void;
@@ -22,11 +22,11 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
     if (!self) return;
     setStarting(true);
     try {
-      const playerClerkIds = [
+      const playerUserIds = [
         self.id,
         ...others.map((o) => o.id),
       ].filter(Boolean) as string[];
-      await onStart(playerClerkIds);
+      await onStart(playerUserIds);
     } catch (e) {
       console.error("Failed to start:", e);
       setStarting(false);

@@ -1,16 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games, prompts, users } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
+import { getUser } from "@/lib/get-user";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -36,11 +36,11 @@ export async function GET(
   const userMap = new Map(userRows.map((u) => [u.id, u]));
 
   const promptsWithUsers = roundPrompts.map((p) => {
-    const user = userMap.get(p.userId);
+    const u = userMap.get(p.userId);
     return {
       promptId: p.id,
-      userId: user?.clerkId || "",
-      username: user?.username || "Unknown",
+      userId: u?.id ?? "",
+      username: u?.username ?? "Unknown",
       targetWord: p.targetWord,
       tabooWords: p.tabooWords,
       imageUrl: p.imageUrl,

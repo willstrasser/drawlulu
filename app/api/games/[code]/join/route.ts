@@ -1,22 +1,19 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { PHASE } from "@/lib/phases";
-import { ensureUser } from "@/lib/ensure-user";
+import { getUser } from "@/lib/get-user";
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  await ensureUser(clerkId);
 
   // Check game exists and is in lobby
   const [game] = await db

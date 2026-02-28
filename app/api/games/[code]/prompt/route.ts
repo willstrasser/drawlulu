@@ -1,17 +1,17 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTabooWords } from "@/lib/utils";
+import { getUser } from "@/lib/get-user";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,5 +1,4 @@
 import type { FullConfig } from "@playwright/test";
-import { clerkSetup } from "@clerk/testing/playwright";
 import dotenv from "dotenv";
 import path from "path";
 import { seedWordCards, cleanGameData } from "./helpers/db";
@@ -21,10 +20,9 @@ export default async function globalSetup(_config: FullConfig): Promise<void> {
 
   const required = [
     "DATABASE_URL",
-    "TEST_HOST_EMAIL",
-    "TEST_PLAYER2_EMAIL",
-    "CLERK_SECRET_KEY",
-    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "SESSION_SECRET",
+    "TEST_HOST_USERNAME",
+    "TEST_PLAYER2_USERNAME",
   ];
   for (const key of required) {
     if (!process.env[key]) {
@@ -36,15 +34,6 @@ export default async function globalSetup(_config: FullConfig): Promise<void> {
   // The Neon branch was created by scripts/pretest.ts and already has the
   // full schema (inherited from test-seed).  We just ensure the test word
   // cards are present and game tables are empty.
-  //
-  // When Neon branching is enabled:  branch inherits test-seed data which
-  //   already has "Test Category", so seedWordCards is a no-op (ON CONFLICT).
-  // When branching is disabled:  seedWordCards inserts from scratch.
   await cleanGameData();
   await seedWordCards();
-
-  // ── Clerk setup ─────────────────────────────────────────────────────────
-  await clerkSetup({
-    publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-  });
 }

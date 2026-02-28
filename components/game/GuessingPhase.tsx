@@ -46,8 +46,8 @@ export function GuessingPhase({
   const currentPrompt = prompts[currentPromptIndex];
   if (!currentPrompt) return null;
 
-  const currentClerkId = self?.id as string;
-  const isMyPrompt = currentPrompt.userId === currentClerkId;
+  const currentUserId = self?.id as string;
+  const isMyPrompt = currentPrompt.userId === currentUserId;
 
   const handleGuess = async () => {
     if (!guessText.trim() || isMyPrompt || hasGuessedCorrectly) return;
@@ -66,7 +66,7 @@ export function GuessingPhase({
         setHasGuessedCorrectly(true);
       }
       onGuessSubmitted({
-        userId: currentClerkId,
+        userId: currentUserId,
         username: data.username || "You",
         guessText: guessText.trim(),
         isCorrect: data.isCorrect,

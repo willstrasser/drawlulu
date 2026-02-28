@@ -56,7 +56,8 @@ test.beforeEach(async ({ browser }) => {
   hostPage = await hostCtx.newPage();
   p2Page = await p2Ctx.newPage();
 
-  // signInAs* navigates to '/' and signs the user in via Clerk's ticket strategy.
+  // signInAs* navigates to '/', POSTs to /api/auth/guest, reloads, and waits
+  // for the username to appear in the nav before returning.
   await Promise.all([signInAsHost(hostPage), signInAsPlayer2(p2Page)]);
 });
 

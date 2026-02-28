@@ -13,8 +13,6 @@ type DevPanelProps = {
   onSetPhase: (phase: GamePhase) => void;
 };
 
-export const DEV_PANEL_USER_IDS = new Set(["user_39aefS1uKSqNdL1nkVeKAWcjHvC"]);
-
 const PHASES = Object.values(PHASE);
 
 export function DevPanel({

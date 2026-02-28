@@ -1,18 +1,17 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, rounds, prompts } from "@/lib/db/schema";
-import { eq, max } from "drizzle-orm";
+import { games, rounds, prompts, users } from "@/lib/db/schema";
+import { eq, max, inArray } from "drizzle-orm";
 import { getWordCardsFromDB } from "@/lib/db/word-cards";
-import { ensureUser } from "@/lib/ensure-user";
+import { getUser } from "@/lib/get-user";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -26,28 +25,40 @@ export async function POST(
   }
 
   // Verify caller is host
-  const hostUser = await ensureUser(clerkId);
-  if (hostUser.id !== game.hostId) {
+  if (user.userId !== game.hostId) {
     return NextResponse.json({ error: "Only host can start" }, { status: 403 });
   }
 
-  // Get player clerk IDs from request (sent from Liveblocks presence)
-  const { playerClerkIds, category } = (await request.json()) as {
-    playerClerkIds: string[];
+  // Player user IDs are Liveblocks IDs, which are our user UUIDs
+  const { playerUserIds, category } = (await request.json()) as {
+    playerUserIds: string[];
     category?: string;
   };
 
-  if (playerClerkIds.length < 2) {
+  if (playerUserIds.length < 2) {
     return NextResponse.json(
       { error: "Need at least 2 players" },
       { status: 400 }
     );
   }
 
-  // Ensure all players exist in DB
-  const playerUsers = await Promise.all(
-    playerClerkIds.map((cid) => ensureUser(cid))
-  );
+  // Load all players from DB
+  const playerUsers = await db
+    .select()
+    .from(users)
+    .where(inArray(users.id, playerUserIds));
+
+  if (playerUsers.length < 2) {
+    return NextResponse.json(
+      { error: "Not enough registered players" },
+      { status: 400 }
+    );
+  }
+
+  // Preserve order matching playerUserIds
+  const orderedPlayers = playerUserIds
+    .map((id) => playerUsers.find((u) => u.id === id))
+    .filter(Boolean) as (typeof playerUsers)[number][];
 
   // Query max roundNumber for this game and increment
   const [{ maxRound }] = await db
@@ -68,10 +79,10 @@ export async function POST(
     .returning();
 
   // Assign random cards to each player
-  const cards = await getWordCardsFromDB(playerUsers.length, category);
+  const cards = await getWordCardsFromDB(orderedPlayers.length, category);
 
   const promptEntries = await Promise.all(
-    playerUsers.map(async (player, i) => {
+    orderedPlayers.map(async (player, i) => {
       const [p] = await db
         .insert(prompts)
         .values({
@@ -91,14 +102,14 @@ export async function POST(
     .set({ status: "active", currentRoundId: round.id })
     .where(eq(games.id, game.id));
 
-  // Return prompt assignments keyed by clerkId
+  // Return prompt assignments keyed by userId (UUID)
   const assignments: Record<
     string,
     { promptId: string; targetWord: string; tabooWords: string[] }
   > = {};
 
-  for (let i = 0; i < playerUsers.length; i++) {
-    assignments[playerClerkIds[i]] = {
+  for (let i = 0; i < orderedPlayers.length; i++) {
+    assignments[playerUserIds[i]] = {
       promptId: promptEntries[i].id,
       targetWord: promptEntries[i].targetWord,
       tabooWords: promptEntries[i].tabooWords,

@@ -1,18 +1,10 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/api/liveblocks-auth",
-  "/api/cron/(.*)",
-]);
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-  }
-});
+// All routes are public — authentication is handled per-route via iron-session.
+export function proxy(_request: NextRequest) {
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

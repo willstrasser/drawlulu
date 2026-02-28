@@ -1,19 +1,16 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { generateRoomCode } from "@/lib/utils";
 import { PHASE } from "@/lib/phases";
-import { ensureUser } from "@/lib/ensure-user";
+import { getUser } from "@/lib/get-user";
 
 export async function POST() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const dbUser = await ensureUser(clerkId);
 
   // Generate unique room code
   let roomCode: string;
@@ -32,7 +29,7 @@ export async function POST() {
     .insert(games)
     .values({
       roomCode,
-      hostId: dbUser.id,
+      hostId: user.userId,
       status: PHASE.LOBBY,
     })
     .returning();

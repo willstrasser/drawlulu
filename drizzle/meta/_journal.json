@@ -15,6 +15,13 @@
       "when": 1772220628446,
       "tag": "0001_smooth_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772254711542,
+      "tag": "0002_busy_dagger",
+      "breakpoints": true
     }
   ]
 }

@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@clerk/nextjs": "^6.37.3",
     "@fal-ai/serverless-client": "^0.15.0",
     "@liveblocks/client": "^3.13.5",
     "@liveblocks/node": "^3.13.5",
@@ -29,13 +28,13 @@
     "@neondatabase/serverless": "^1.0.2",
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.45.1",
+    "iron-session": "^8.0.4",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "ws": "^8.19.0"
   },
   "devDependencies": {
-    "@clerk/testing": "^1.14.2",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

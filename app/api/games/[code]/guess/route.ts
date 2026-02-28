@@ -1,27 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { guesses, prompts, users } from "@/lib/db/schema";
+import { guesses, prompts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getGuesserScore } from "@/lib/scoring";
+import { getUser } from "@/lib/get-user";
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   await params;
-  const { userId: clerkId } = await auth();
-  if (!clerkId) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const [dbUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.clerkId, clerkId));
-
-  if (!dbUser) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   const { promptId, guessText } = (await request.json()) as {
@@ -40,7 +31,7 @@ export async function POST(
   }
 
   // Don't let the prompter guess their own
-  if (prompt.userId === dbUser.id) {
+  if (prompt.userId === user.userId) {
     return NextResponse.json(
       { error: "Can't guess your own prompt" },
       { status: 400 }
@@ -54,7 +45,7 @@ export async function POST(
     .where(
       and(
         eq(guesses.promptId, promptId),
-        eq(guesses.userId, dbUser.id),
+        eq(guesses.userId, user.userId),
         eq(guesses.isCorrect, true)
       )
     );
@@ -93,7 +84,7 @@ export async function POST(
         .insert(guesses)
         .values({
           promptId,
-          userId: dbUser.id,
+          userId: user.userId,
           guessText: guessText.trim(),
           isCorrect: true,
           pointsAwarded: pts,
@@ -107,7 +98,7 @@ export async function POST(
       .insert(guesses)
       .values({
         promptId,
-        userId: dbUser.id,
+        userId: user.userId,
         guessText: guessText.trim(),
         isCorrect: false,
         pointsAwarded: 0,
@@ -119,6 +110,6 @@ export async function POST(
   return NextResponse.json({
     isCorrect: guess.isCorrect,
     pointsAwarded: guess.pointsAwarded,
-    username: dbUser.username,
+    username: user.username,
   });
 }

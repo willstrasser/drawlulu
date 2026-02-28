@@ -38,7 +38,7 @@ export type Storage = {
 };
 
 export type UserMeta = {
-  id: string; // Clerk user ID, set by liveblocks.prepareSession(userId)
+  id: string; // User UUID from our DB, set by liveblocks.prepareSession(userId)
   info: {
     username: string;
     imageUrl?: string;
