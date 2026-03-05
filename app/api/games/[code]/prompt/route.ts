@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTabooWords } from "@/lib/utils";
 import { getUser } from "@/lib/get-user";
+
+const PromptSchema = z.object({
+  promptId: z.string().uuid(),
+  promptText: z.string().min(1).max(1000),
+});
 
 export async function POST(
   request: Request,
@@ -15,10 +21,14 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { promptId, promptText } = (await request.json()) as {
-    promptId: string;
-    promptText: string;
-  };
+  const parsed = PromptSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { promptId, promptText } = parsed.data;
 
   // Get the prompt entry
   const [prompt] = await db

@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { guesses, prompts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getGuesserScore } from "@/lib/scoring";
 import { getUser } from "@/lib/get-user";
+
+const GuessSchema = z.object({
+  promptId: z.string().uuid(),
+  guessText: z.string().min(1).max(200),
+});
 
 export async function POST(
   request: Request,
@@ -15,10 +21,14 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { promptId, guessText } = (await request.json()) as {
-    promptId: string;
-    guessText: string;
-  };
+  const parsed = GuessSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { promptId, guessText } = parsed.data;
 
   // Get the prompt to check the target word
   const [prompt] = await db

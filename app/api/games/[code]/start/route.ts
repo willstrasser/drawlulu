@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { games, rounds, prompts, users } from "@/lib/db/schema";
 import { eq, max, inArray } from "drizzle-orm";
 import { getWordCardsFromDB } from "@/lib/db/word-cards";
 import { getUser } from "@/lib/get-user";
+
+const StartSchema = z.object({
+  playerUserIds: z.array(z.string().uuid()).min(2),
+  category: z.string().optional(),
+});
 
 export async function POST(
   request: Request,
@@ -30,17 +36,14 @@ export async function POST(
   }
 
   // Player user IDs are Liveblocks IDs, which are our user UUIDs
-  const { playerUserIds, category } = (await request.json()) as {
-    playerUserIds: string[];
-    category?: string;
-  };
-
-  if (playerUserIds.length < 2) {
+  const parsed = StartSchema.safeParse(await request.json());
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Need at least 2 players" },
+      { error: "Invalid request", details: parsed.error.flatten() },
       { status: 400 }
     );
   }
+  const { playerUserIds, category } = parsed.data;
 
   // Load all players from DB
   const playerUsers = await db
