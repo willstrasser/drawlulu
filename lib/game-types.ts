@@ -12,6 +12,7 @@ export type PromptEntry = {
   tabooWords: string[];
   imageUrl: string | null;
   forbiddenWordsUsed: string[];
+  sanitizedPrompt: string | null;
 };
 
 export type PlayerScore = {

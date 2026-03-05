@@ -66,10 +66,14 @@ export function useGameTimer({
         console.error("Failed to generate images:", e);
       }
     } else if (phase === PHASE.GUESSING) {
+      setGamePhase(PHASE.REVEALING);
+      setTimerEndsAt(Date.now() + 7000);
+    } else if (phase === PHASE.REVEALING) {
       const nextIndex = idx + 1;
+      clearGuesses();
       if (currentPrompts && nextIndex < currentPrompts.length) {
         setCurrentPromptIndex(nextIndex);
-        clearGuesses();
+        setGamePhase(PHASE.GUESSING);
         setTimerEndsAt(Date.now() + 30000);
       } else {
         setGamePhase(PHASE.SCOREBOARD);

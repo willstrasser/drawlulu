@@ -3,6 +3,7 @@ export const PHASE = {
   PROMPTING: "prompting",
   GENERATING: "generating",
   GUESSING: "guessing",
+  REVEALING: "revealing",
   SCOREBOARD: "scoreboard",
 } as const;
 

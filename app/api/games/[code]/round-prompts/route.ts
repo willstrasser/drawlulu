@@ -45,6 +45,7 @@ export async function GET(
       tabooWords: p.tabooWords,
       imageUrl: p.imageUrl,
       forbiddenWordsUsed: p.forbiddenWordsUsed || [],
+      sanitizedPrompt: p.sanitizedPrompt,
     };
   });
 

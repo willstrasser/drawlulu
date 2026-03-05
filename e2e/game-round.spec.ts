@@ -56,6 +56,7 @@ test.beforeEach(async ({ browser }) => {
   hostPage = await hostCtx.newPage();
   p2Page = await p2Ctx.newPage();
 
+
   // signInAs* navigates to '/', POSTs to /api/auth/guest, reloads, and waits
   // for the username to appear in the nav before returning.
   await Promise.all([signInAsHost(hostPage), signInAsPlayer2(p2Page)]);
@@ -149,10 +150,9 @@ test("full happy-path round: lobby → prompting → generating → guessing →
 
   // Both submitted → allSubmitted effect fires on host → timer collapses to
   // now → useGameTimer calls /api/generate → phase transitions to GENERATING.
+  // Host reliably shows GENERATING; with MOCK_FAL the response is instant so
+  // p2 may have already transitioned to GUESSING before we can catch it.
   await expect(hostPage.getByText("Generating Images...")).toBeVisible({
-    timeout: 30_000,
-  });
-  await expect(p2Page.getByText("Generating Images...")).toBeVisible({
     timeout: 30_000,
   });
 
@@ -194,6 +194,10 @@ test("full happy-path round: lobby → prompting → generating → guessing →
       name: "Expire Timer (skip phase)",
     });
     await expect(expireBtn).toBeEnabled({ timeout: 10_000 });
+    // First click: end GUESSING → enters REVEALING
+    await expireBtn.click();
+    // Second click: skip REVEALING → advances to next image or scoreboard
+    await expect(expireBtn).toBeEnabled({ timeout: 5_000 });
     await expireBtn.click();
   }
 

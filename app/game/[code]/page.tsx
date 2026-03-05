@@ -18,6 +18,7 @@ import { PromptPhase } from "@/components/game/PromptPhase";
 import { GeneratingPhase } from "@/components/game/GeneratingPhase";
 import { GuessingPhase } from "@/components/game/GuessingPhase";
 import { Scoreboard } from "@/components/game/Scoreboard";
+import { RevealPhase } from "@/components/game/RevealPhase";
 import { DevPanel } from "@/components/game/DevPanel";
 import { UsernameModal } from "@/components/game/UsernameModal";
 import type { GamePhase } from "@/liveblocks.config";
@@ -37,6 +38,7 @@ function GameRoom({ code }: { code: string }) {
   const selectedCategory = useStorage((root) => root.selectedCategory);
   const roundNumber = useStorage((root) => root.roundNumber);
   const newGameCode = useStorage((root) => root.newGameCode);
+  const currentGuesses = useStorage((root) => root.currentGuesses);
 
   const [myPresence, setMyPresence] = useMyPresence();
 
@@ -59,9 +61,12 @@ function GameRoom({ code }: { code: string }) {
 
   useEffect(() => {
     fetch(`/api/games/${code}`)
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`GET /api/games/${code} → ${r.status}`);
+        return r.json();
+      })
       .then((d) => { if (d.hostUserId) setHostUserId(d.hostUserId); })
-      .catch(() => {/* non-critical */});
+      .catch((e) => console.error("[GameRoom] hostUserId fetch failed:", e));
   }, [code]);
 
   // Set username on join
@@ -293,6 +298,13 @@ function GameRoom({ code }: { code: string }) {
             currentPromptIndex={currentPromptIndex ?? 0}
             onGuessSubmitted={handleGuessSubmitted}
             category={selectedCategory ?? ""}
+          />
+        )}
+
+        {gamePhase === PHASE.REVEALING && prompts && (
+          <RevealPhase
+            prompt={prompts[currentPromptIndex ?? 0]}
+            correctGuesses={(currentGuesses ?? []).filter((g) => g.isCorrect)}
           />
         )}
 
