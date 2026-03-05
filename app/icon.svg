@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Offset shadow -->
+  <rect x="3" y="3" width="28" height="28" rx="7" fill="#171717"/>
+  <!-- Teal card -->
+  <rect x="1" y="1" width="28" height="28" rx="7" fill="#00CECB" stroke="#171717" stroke-width="1.5"/>
+
+  <!-- Squiggle 1 (cream) -->
+  <path d="M 5,12 C 8,5 11,20 15,13 C 19,6 23,20 27,13"
+        fill="none" stroke="#F7F5E6" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Squiggle 2 (yellow) -->
+  <path d="M 6,21 C 10,15 14,27 18,21 C 21,17 24,24 26,20"
+        fill="none" stroke="#FFED66" stroke-width="2" stroke-linecap="round"/>
+</svg>
