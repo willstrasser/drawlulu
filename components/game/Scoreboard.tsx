@@ -2,6 +2,7 @@
 
 import type { PlayerScore, PromptBreakdown } from "@/lib/game-types";
 import Image from "next/image";
+import { AnnotatedPrompt } from "./AnnotatedPrompt";
 
 type ScoreboardProps = {
   isHost: boolean;
@@ -117,20 +118,20 @@ export function Scoreboard({
                       <span className="text-gray-500 font-normal">drew</span>{" "}
                       <span className="text-riso-teal">{b.targetWord}</span>
                     </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">
-                        Prompter bonus:{" "}
-                        <span className="text-gray-900 font-medium">
-                          {b.prompterPoints}pts
-                        </span>
+                    {b.sanitizedPrompt && (
+                      <p className="text-sm text-gray-600 mt-0.5">
+                        <AnnotatedPrompt
+                          sanitizedPrompt={b.sanitizedPrompt}
+                          forbiddenWords={b.forbiddenWordsUsed}
+                        />
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600 mt-0.5">
+                      Prompter bonus:{" "}
+                      <span className="text-gray-900 font-medium">
+                        {b.prompterPoints}pts
                       </span>
-                      {b.forbiddenWordsUsed.length > 0 && (
-                        <span className="text-riso-red">
-                          ({b.forbiddenWordsUsed.length} taboo word
-                          {b.forbiddenWordsUsed.length > 1 ? "s" : ""} used)
-                        </span>
-                      )}
-                    </div>
+                    </p>
                   </div>
                 </div>
 

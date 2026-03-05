@@ -27,6 +27,7 @@ export type PromptBreakdown = {
   targetWord: string;
   imageUrl: string | null;
   forbiddenWordsUsed: string[];
+  sanitizedPrompt: string | null;
   prompterPoints: number;
   correctGuesses: { username: string; points: number }[];
 };

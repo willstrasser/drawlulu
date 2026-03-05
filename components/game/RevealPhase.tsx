@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { PromptEntry } from "@/lib/game-types";
 import type { GuessEntry } from "@/liveblocks.config";
+import { AnnotatedPrompt } from "./AnnotatedPrompt";
 
 type RevealPhaseProps = {
   prompt: PromptEntry;
@@ -59,8 +60,11 @@ export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
         <div className="w-full bg-riso-purple/10 border-2 border-riso-purple/30 rounded-lg p-4">
           <p className="text-riso-purple text-sm">
             Their prompt:{" "}
-            <span className="font-medium italic">
-              &ldquo;{prompt.sanitizedPrompt}&rdquo;
+            <span className="font-medium">
+              <AnnotatedPrompt
+                sanitizedPrompt={prompt.sanitizedPrompt}
+                forbiddenWords={prompt.forbiddenWordsUsed}
+              />
             </span>
           </p>
         </div>

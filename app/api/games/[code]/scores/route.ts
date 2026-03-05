@@ -101,6 +101,7 @@ export async function GET(
       targetWord: prompt.targetWord,
       imageUrl: prompt.imageUrl,
       forbiddenWordsUsed: prompt.forbiddenWordsUsed || [],
+      sanitizedPrompt: prompt.sanitizedPrompt,
       prompterPoints: prompterScore,
       correctGuesses: guessDetails,
     });
