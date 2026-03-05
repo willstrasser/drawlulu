@@ -54,17 +54,24 @@ export function useGameTimer({
       setTimerEndsAt(null);
 
       try {
-        await fetch(`/api/games/${code}/generate`, {
-          method: "POST",
-        });
-
-        setCurrentPromptIndex(0);
-        clearGuesses();
-        setGamePhase(PHASE.GUESSING);
-        setTimerEndsAt(Date.now() + 30000);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 90_000);
+        try {
+          await fetch(`/api/games/${code}/generate`, {
+            method: "POST",
+            signal: controller.signal,
+          });
+        } finally {
+          clearTimeout(timeout);
+        }
       } catch (e) {
-        console.error("Failed to generate images:", e);
+        console.error("[useGameTimer] Image generation failed, advancing anyway:", e);
       }
+      // Always advance — images that failed show "No image generated"
+      setCurrentPromptIndex(0);
+      clearGuesses();
+      setGamePhase(PHASE.GUESSING);
+      setTimerEndsAt(Date.now() + 30000);
     } else if (phase === PHASE.GUESSING) {
       setGamePhase(PHASE.REVEALING);
       setTimerEndsAt(Date.now() + 7000);

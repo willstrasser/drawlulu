@@ -1,8 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
-export function GeneratingPhase() {
+type GeneratingPhaseProps = {
+  isHost: boolean;
+  onSkip: () => void;
+};
+
+export function GeneratingPhase({ isHost, onSkip }: GeneratingPhaseProps) {
+  const [showSkip, setShowSkip] = useState(false);
+
+  useEffect(() => {
+    if (!isHost) return;
+    const t = setTimeout(() => setShowSkip(true), 35_000);
+    return () => clearTimeout(t);
+  }, [isHost]);
+
   return (
     <div className="flex flex-col items-center gap-6">
       <motion.div
@@ -15,6 +29,14 @@ export function GeneratingPhase() {
         AI is creating images from everyone&apos;s prompts. This may take a few
         seconds.
       </p>
+      {showSkip && (
+        <button
+          onClick={onSkip}
+          className="mt-2 text-sm text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors"
+        >
+          Skip to guessing →
+        </button>
+      )}
     </div>
   );
 }

@@ -201,6 +201,13 @@ function GameRoom({ code }: { code: string }) {
     setMyPresence({ hasSubmittedPrompt: true });
   };
 
+  const handleSkipGeneration = () => {
+    setCurrentPromptIndex(0);
+    clearGuesses();
+    setGamePhase(PHASE.GUESSING);
+    setTimerEndsAt(Date.now() + 30000);
+  };
+
   // Skip timer when all players have submitted prompts
   const allSubmitted =
     gamePhase === PHASE.PROMPTING &&
@@ -299,7 +306,9 @@ function GameRoom({ code }: { code: string }) {
               </div>
             )}
 
-            {gamePhase === PHASE.GENERATING && <GeneratingPhase />}
+            {gamePhase === PHASE.GENERATING && (
+              <GeneratingPhase isHost={isHost} onSkip={handleSkipGeneration} />
+            )}
 
             {gamePhase === PHASE.GUESSING && (
               <GuessingPhase
