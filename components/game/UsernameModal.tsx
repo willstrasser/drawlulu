@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
+
+const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
 
 type UsernameModalProps = {
   onComplete: (username: string) => void;
@@ -32,8 +35,20 @@ export function UsernameModal({ onComplete }: UsernameModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="relative bg-white/90 border-2 border-gray-900/10 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4">
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="relative bg-white/90 border-2 border-gray-900/10 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
+        initial={{ opacity: 0, scale: 0.88, y: 20, rotate: -1.5 }}
+        animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 10 }}
+        transition={WOBBLE}
+      >
         <h2 className="text-2xl font-bold mb-2 text-gray-900 text-center">
           What should we call you?
         </h2>
@@ -71,7 +86,7 @@ export function UsernameModal({ onComplete }: UsernameModalProps) {
           </a>{" "}
           to save your stats.
         </p>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

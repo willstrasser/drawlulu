@@ -1,8 +1,11 @@
 "use client";
 
+import { motion } from "motion/react";
 import type { PlayerScore, PromptBreakdown } from "@/lib/game-types";
 import Image from "next/image";
 import { AnnotatedPrompt } from "./AnnotatedPrompt";
+
+const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
 
 type ScoreboardProps = {
   isHost: boolean;
@@ -19,13 +22,20 @@ function ScoreList({ scores }: { scores: PlayerScore[] }) {
   return (
     <div className="w-full space-y-2">
       {sorted.map((player, i) => (
-        <div
+        <motion.div
           key={player.userId}
           className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${
             i === 0
               ? "bg-riso-yellow/30 border-riso-yellow"
               : "bg-white/60 border-gray-900/10"
           }`}
+          initial={{ opacity: 0, x: -20, rotate: i === 0 ? -2.5 : -1.5 }}
+          animate={{ opacity: 1, x: 0, rotate: 0, scale: i === 0 ? [1, 1.04, 1] : 1 }}
+          transition={{
+            ...{ type: "spring", stiffness: 380, damping: 26 },
+            delay: i * 0.08,
+            scale: i === 0 ? { delay: i * 0.08 + 0.3, duration: 0.4 } : undefined,
+          }}
         >
           <div className="flex items-center gap-3">
             <span
@@ -44,7 +54,7 @@ function ScoreList({ scores }: { scores: PlayerScore[] }) {
             <span className="font-medium text-gray-900">{player.username}</span>
           </div>
           <span className="text-xl font-bold text-gray-900">{player.score}pts</span>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -70,7 +80,14 @@ export function Scoreboard({
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-lg">
-      <h2 className="text-3xl font-bold text-gray-900">Round {roundNumber} Results</h2>
+      <motion.h2
+        className="text-3xl font-bold text-gray-900"
+        initial={{ opacity: 0, y: -20, rotate: 1.5 }}
+        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        transition={WOBBLE}
+      >
+        Round {roundNumber} Results
+      </motion.h2>
 
       {/* This round scores */}
       <div className="w-full">
@@ -97,10 +114,13 @@ export function Scoreboard({
             Round Summary
           </h3>
           <div className="space-y-4">
-            {promptBreakdowns.map((b) => (
-              <div
+            {promptBreakdowns.map((b, index) => (
+              <motion.div
                 key={b.promptId}
                 className="bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 rounded-xl p-4 space-y-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 26, delay: index * 0.1 }}
               >
                 <div className="flex items-center gap-3">
                   {b.imageUrl && (
@@ -161,7 +181,7 @@ export function Scoreboard({
                 ) : (
                   <p className="text-sm text-gray-500 pl-2">No correct guesses</p>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

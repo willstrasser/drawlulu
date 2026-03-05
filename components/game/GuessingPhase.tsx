@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { useStorage, useSelf } from "@/liveblocks.config";
 import { Timer } from "./Timer";
 import type { GuessEntry } from "@/liveblocks.config";
 import type { PromptEntry } from "@/lib/game-types";
 import Image from "next/image";
+
+const BOUNCY = { type: "spring", stiffness: 500, damping: 28 } as const;
 
 type GuessingPhaseProps = {
   roomCode: string;
@@ -99,21 +102,31 @@ export function GuessingPhase({
         </p>
       </div>
 
-      {currentPrompt.imageUrl ? (
-        <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_--theme(--color-gray-900/0.1)]">
-          <Image
-            src={currentPrompt.imageUrl}
-            alt="AI generated image"
-            className="max-w-full max-h-100 object-contain"
-            width={400}
-            height={400}
-          />
-        </div>
-      ) : (
-        <div className="w-full h-64 bg-white/60 rounded-xl border-2 border-gray-900/10 flex items-center justify-center text-gray-500">
-          No image generated
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPromptIndex}
+          initial={{ opacity: 0, scale: 0.95, rotate: -1 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+        >
+          {currentPrompt.imageUrl ? (
+            <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_--theme(--color-gray-900/0.1)]">
+              <Image
+                src={currentPrompt.imageUrl}
+                alt="AI generated image"
+                className="max-w-full max-h-100 object-contain"
+                width={400}
+                height={400}
+              />
+            </div>
+          ) : (
+            <div className="w-full h-64 bg-white/60 rounded-xl border-2 border-gray-900/10 flex items-center justify-center text-gray-500">
+              No image generated
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       {isMyPrompt ? (
         <div className="bg-riso-purple/10 border-2 border-riso-purple/30 rounded-lg p-4 text-center">
@@ -126,9 +139,14 @@ export function GuessingPhase({
           </p>
         </div>
       ) : hasGuessedCorrectly ? (
-        <div className="bg-riso-teal/10 border-2 border-riso-teal/30 rounded-lg p-4 text-center">
+        <motion.div
+          className="bg-riso-teal/10 border-2 border-riso-teal/30 rounded-lg p-4 text-center"
+          initial={{ opacity: 0, scale: 0.8, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={BOUNCY}
+        >
           <p className="text-riso-teal font-bold">You guessed correctly!</p>
-        </div>
+        </motion.div>
       ) : (
         <div className="flex gap-2 w-full">
           <input
@@ -154,23 +172,29 @@ export function GuessingPhase({
         <div className="w-full">
           <h3 className="text-sm font-medium text-gray-600 mb-2">Guesses</h3>
           <div className="space-y-1 max-h-40 overflow-y-auto">
-            {[...currentGuesses].reverse().map((g, i) => (
-              <div
-                key={i}
-                className={`px-3 py-1.5 rounded text-sm ${
-                  g.isCorrect
-                    ? "bg-riso-teal/10 border-2 border-riso-teal/30 text-riso-teal"
-                    : "bg-white/60 text-gray-600"
-                }`}
-              >
-                <span className="font-medium">{g.username}:</span>{" "}
-                {g.isCorrect ? (
-                  <span>Guessed correctly! (+{g.pointsAwarded}pts)</span>
-                ) : (
-                  <span>{g.guessText}</span>
-                )}
-              </div>
-            ))}
+            <AnimatePresence initial={false}>
+              {[...currentGuesses].reverse().map((g) => (
+                <motion.div
+                  key={`${g.userId}-${g.timestamp}`}
+                  initial={{ opacity: 0, x: 24, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -16 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                  className={`px-3 py-1.5 rounded text-sm ${
+                    g.isCorrect
+                      ? "bg-riso-teal/10 border-2 border-riso-teal/30 text-riso-teal"
+                      : "bg-white/60 text-gray-600"
+                  }`}
+                >
+                  <span className="font-medium">{g.username}:</span>{" "}
+                  {g.isCorrect ? (
+                    <span>Guessed correctly! (+{g.pointsAwarded}pts)</span>
+                  ) : (
+                    <span>{g.guessText}</span>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       )}

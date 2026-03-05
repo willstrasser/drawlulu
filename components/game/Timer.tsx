@@ -9,6 +9,7 @@ export function Timer() {
 
   useEffect(() => {
     if (!timerEndsAt) {
+      setSecondsLeft(null);
       return;
     }
     const update = () => {
@@ -24,12 +25,7 @@ export function Timer() {
     return () => clearInterval(interval);
   }, [timerEndsAt]);
 
-  if (!timerEndsAt) {
-    setSecondsLeft(null);
-    return;
-  }
-
-  if (secondsLeft === null) return null;
+  if (!timerEndsAt || secondsLeft === null) return null;
 
   const isUrgent = secondsLeft <= 10;
 

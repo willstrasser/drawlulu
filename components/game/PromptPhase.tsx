@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Timer } from "./Timer";
+
+const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
+const BOUNCY = { type: "spring", stiffness: 500, damping: 28 } as const;
 
 type PromptPhaseProps = {
   targetWord: string;
@@ -51,7 +55,12 @@ export function PromptPhase({
     return (
       <div className="flex flex-col items-center gap-6">
         <Timer />
-        <div className="text-center">
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, scale: 0.85, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={BOUNCY}
+        >
           <h2 className="text-2xl font-bold mb-2 text-gray-900">Prompt Submitted!</h2>
           {result && result.forbiddenWordsUsed.length > 0 && (
             <div className="bg-riso-red/10 border-2 border-riso-red/50 rounded-lg p-3 mt-2">
@@ -64,7 +73,7 @@ export function PromptPhase({
           <p className="text-gray-600 mt-4">
             Waiting for other players...
           </p>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -81,7 +90,14 @@ export function PromptPhase({
 
       <div className="text-center">
         <p className="text-gray-600 text-sm mb-1">Your target word is:</p>
-        <h2 className="text-3xl font-bold text-riso-teal">{targetWord}</h2>
+        <motion.h2
+          className="text-3xl font-bold text-riso-teal"
+          initial={{ opacity: 0, scale: 0.7, rotate: -3 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ ...WOBBLE, delay: 0.1 }}
+        >
+          {targetWord}
+        </motion.h2>
       </div>
 
       <div className="w-full">
@@ -89,13 +105,16 @@ export function PromptPhase({
           Taboo Words (don&apos;t use these!)
         </h3>
         <div className="flex flex-wrap gap-2">
-          {tabooWords.map((word) => (
-            <span
+          {tabooWords.map((word, i) => (
+            <motion.span
               key={word}
               className="bg-riso-red/10 border-2 border-riso-red/30 text-riso-red px-3 py-1 rounded-full text-sm font-medium"
+              initial={{ opacity: 0, scale: 0.6, rotate: i % 2 === 0 ? -3 : 3 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ ...BOUNCY, delay: 0.15 + i * 0.06 }}
             >
               {word}
-            </span>
+            </motion.span>
           ))}
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   RoomProvider,
   useMyPresence,
@@ -259,66 +260,77 @@ function GameRoom({ code }: { code: string }) {
       </nav>
 
       <main className="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-57px)]">
-        {gamePhase === PHASE.LOBBY && (
-          <Lobby
-            roomCode={code}
-            isHost={isHost}
-            onStart={handleStart}
-            categories={categories}
-            selectedCategory={selectedCategory ?? ""}
-            onSelectCategory={setSelectedCategory}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={gamePhase ?? "loading"}
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+            className="flex flex-col items-center justify-center w-full"
+          >
+            {gamePhase === PHASE.LOBBY && (
+              <Lobby
+                roomCode={code}
+                isHost={isHost}
+                onStart={handleStart}
+                categories={categories}
+                selectedCategory={selectedCategory ?? ""}
+                onSelectCategory={setSelectedCategory}
+              />
+            )}
 
-        {gamePhase === PHASE.PROMPTING && myAssignment && (
-          <PromptPhase
-            targetWord={myAssignment.targetWord}
-            tabooWords={myAssignment.tabooWords}
-            promptId={myAssignment.promptId}
-            roomCode={code}
-            onSubmitted={handlePromptSubmitted}
-            hasSubmitted={hasSubmittedPrompt}
-            category={selectedCategory ?? ""}
-          />
-        )}
+            {gamePhase === PHASE.PROMPTING && myAssignment && (
+              <PromptPhase
+                targetWord={myAssignment.targetWord}
+                tabooWords={myAssignment.tabooWords}
+                promptId={myAssignment.promptId}
+                roomCode={code}
+                onSubmitted={handlePromptSubmitted}
+                hasSubmitted={hasSubmittedPrompt}
+                category={selectedCategory ?? ""}
+              />
+            )}
 
-        {gamePhase === PHASE.PROMPTING && !myAssignment && (
-          <div className="text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-600">Loading your assignment...</p>
-          </div>
-        )}
+            {gamePhase === PHASE.PROMPTING && !myAssignment && (
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-gray-600">Loading your assignment...</p>
+              </div>
+            )}
 
-        {gamePhase === PHASE.GENERATING && <GeneratingPhase />}
+            {gamePhase === PHASE.GENERATING && <GeneratingPhase />}
 
-        {gamePhase === PHASE.GUESSING && (
-          <GuessingPhase
-            roomCode={code}
-            prompts={prompts}
-            currentPromptIndex={currentPromptIndex ?? 0}
-            onGuessSubmitted={handleGuessSubmitted}
-            category={selectedCategory ?? ""}
-          />
-        )}
+            {gamePhase === PHASE.GUESSING && (
+              <GuessingPhase
+                roomCode={code}
+                prompts={prompts}
+                currentPromptIndex={currentPromptIndex ?? 0}
+                onGuessSubmitted={handleGuessSubmitted}
+                category={selectedCategory ?? ""}
+              />
+            )}
 
-        {gamePhase === PHASE.REVEALING && prompts && (
-          <RevealPhase
-            prompt={prompts[currentPromptIndex ?? 0]}
-            correctGuesses={(currentGuesses ?? []).filter((g) => g.isCorrect)}
-          />
-        )}
+            {gamePhase === PHASE.REVEALING && prompts && (
+              <RevealPhase
+                prompt={prompts[currentPromptIndex ?? 0]}
+                correctGuesses={(currentGuesses ?? []).filter((g) => g.isCorrect)}
+              />
+            )}
 
-        {gamePhase === PHASE.SCOREBOARD && (
-          <Scoreboard
-            isHost={isHost}
-            roundNumber={roundNumber ?? 1}
-            roundScores={roundScores}
-            cumulativeScores={cumulativeScores}
-            promptBreakdowns={promptBreakdowns}
-            onPlayAgain={handlePlayAgain}
-            onNewGame={handleNewGame}
-          />
-        )}
+            {gamePhase === PHASE.SCOREBOARD && (
+              <Scoreboard
+                isHost={isHost}
+                roundNumber={roundNumber ?? 1}
+                roundScores={roundScores}
+                cumulativeScores={cumulativeScores}
+                promptBreakdowns={promptBreakdowns}
+                onPlayAgain={handlePlayAgain}
+                onNewGame={handleNewGame}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
@@ -337,7 +349,9 @@ function GamePageInner({ code }: { code: string }) {
 
   if (!user) {
     return (
-      <UsernameModal onComplete={() => refresh()} />
+      <AnimatePresence>
+        <UsernameModal onComplete={() => refresh()} />
+      </AnimatePresence>
     );
   }
 
