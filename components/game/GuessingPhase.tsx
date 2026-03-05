@@ -85,7 +85,7 @@ export function GuessingPhase({
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+    <div className="relative flex flex-col items-center gap-6 w-full max-w-2xl">
       <Timer />
 
       <div className="text-center">
@@ -198,6 +198,25 @@ export function GuessingPhase({
           </div>
         </div>
       )}
+      {/* Preload all prompt images for instant index transitions */}
+      <div
+        aria-hidden="true"
+        className="absolute opacity-0 pointer-events-none"
+        style={{ left: "-9999px" }}
+      >
+        {prompts.map((p) =>
+          p.imageUrl ? (
+            <Image
+              key={p.promptId}
+              src={p.imageUrl}
+              width={400}
+              height={400}
+              alt=""
+              loading="eager"
+            />
+          ) : null
+        )}
+      </div>
     </div>
   );
 }
