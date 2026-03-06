@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
 import { VercelToolbar } from "@vercel/toolbar/next";
 import "./globals.css";
+import "@/lib/env"; // validates required env vars at startup
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",

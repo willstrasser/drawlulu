@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
 import { wordCards } from "@/lib/db/schema";
@@ -34,8 +35,17 @@ function isGeneratedCard(v: unknown): v is GeneratedCard {
 }
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get("Authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
+  const provided = request.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
+  const providedBuf = Buffer.from(provided.padEnd(cronSecret.length));
+  const secretBuf = Buffer.from(cronSecret.padEnd(provided.length));
+  const match =
+    provided.length === cronSecret.length &&
+    timingSafeEqual(providedBuf, secretBuf);
+  if (!match) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

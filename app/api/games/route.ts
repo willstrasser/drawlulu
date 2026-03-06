@@ -5,11 +5,16 @@ import { eq } from "drizzle-orm";
 import { generateRoomCode } from "@/lib/utils";
 import { PHASE } from "@/lib/phases";
 import { getUser } from "@/lib/get-user";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST() {
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!checkRateLimit(`create-game:${user.userId}`, 5, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   // Generate unique room code

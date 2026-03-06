@@ -4,8 +4,12 @@ import { cookies } from "next/headers";
 import { sessionOptions, type SessionData } from "@/lib/session";
 import { upsertUser } from "@/lib/ensure-user";
 import { randomUUID } from "crypto";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  if (!checkRateLimit(`guest:${getClientIp(request)}`, 10, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
   const { username } = (await request.json()) as { username?: string };
 
   if (!username || !username.trim()) {
