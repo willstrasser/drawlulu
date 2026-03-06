@@ -245,10 +245,10 @@ function GameRoom({ code }: { code: string }) {
     );
   }
 
-  const DEV_USER_IDS = [];
+  const allowListUserIds = process.env.DEV_USER_IDS?.split(",") || [];
   const showDevPanel =
     process.env.NODE_ENV === "development" ||
-    DEV_USER_IDS.includes(user?.userId ?? "");
+    allowListUserIds.includes(user?.userId ?? "");
 
   return (
     <div className="relative z-10 min-h-screen text-gray-900">
