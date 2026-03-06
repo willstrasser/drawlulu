@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { guesses, prompts } from "@/lib/db/schema";
+import { games, guesses, prompts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getGuesserScore } from "@/lib/scoring";
 import { getUser } from "@/lib/get-user";
@@ -15,7 +15,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
-  await params;
+  const { code } = await params;
   const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,6 +30,15 @@ export async function POST(
   }
   const { promptId, guessText } = parsed.data;
 
+  const [game] = await db
+    .select()
+    .from(games)
+    .where(eq(games.roomCode, code));
+
+  if (!game || !game.currentRoundId) {
+    return NextResponse.json({ error: "Game not found" }, { status: 404 });
+  }
+
   // Get the prompt to check the target word
   const [prompt] = await db
     .select()
@@ -38,6 +47,11 @@ export async function POST(
 
   if (!prompt) {
     return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
+  }
+
+  // Ensure this prompt belongs to the current round of this game
+  if (prompt.roundId !== game.currentRoundId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Don't let the prompter guess their own
