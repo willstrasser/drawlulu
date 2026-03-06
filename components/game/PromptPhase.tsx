@@ -53,7 +53,7 @@ export function PromptPhase({
 
   if (hasSubmitted) {
     return (
-      <div className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-4 sm:gap-6">
         <Timer />
         <motion.div
           className="text-center"
@@ -79,7 +79,7 @@ export function PromptPhase({
   }
 
   return (
-    <div className="flex flex-col items-center gap-6 w-full max-w-lg">
+    <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-lg">
       <Timer />
 
       {category && (

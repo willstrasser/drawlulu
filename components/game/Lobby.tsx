@@ -38,7 +38,7 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
   const canStart = isHost && playerCount >= 2 && selectedCategory !== "";
 
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="flex flex-col items-center gap-5 sm:gap-8">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-2 text-gray-900">Game Lobby</h1>
         <div className="flex items-center justify-center gap-2">

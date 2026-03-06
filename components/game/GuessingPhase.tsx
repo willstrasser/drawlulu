@@ -85,7 +85,7 @@ export function GuessingPhase({
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-6 w-full max-w-2xl">
+    <div className="relative flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
       <Timer />
 
       <div className="text-center">

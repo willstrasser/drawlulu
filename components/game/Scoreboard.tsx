@@ -79,7 +79,7 @@ export function Scoreboard({
   }
 
   return (
-    <div className="flex flex-col items-center gap-8 w-full max-w-lg">
+    <div className="flex flex-col items-center gap-5 sm:gap-8 w-full max-w-lg">
       <motion.h2
         className="text-3xl font-bold text-gray-900"
         initial={{ opacity: 0, y: -20, rotate: 1.5 }}
@@ -188,16 +188,16 @@ export function Scoreboard({
       )}
 
       {isHost ? (
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={onPlayAgain}
-            className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            className="w-full sm:w-auto px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
           >
             Next Round
           </button>
           <button
             onClick={onNewGame}
-            className="px-8 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            className="w-full sm:w-auto px-8 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
           >
             New Game
           </button>

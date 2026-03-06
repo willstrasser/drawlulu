@@ -93,9 +93,9 @@ export default function Home() {
         )}
       </nav>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-8 gap-12">
+      <main className="flex-1 flex flex-col items-center justify-center p-5 sm:p-8 gap-8 sm:gap-12">
         <div className="text-center">
-          <h2 className="text-9xl font-bold mb-4">
+          <h2 className="text-5xl sm:text-9xl font-bold mb-4">
             Draw<span className="text-riso-teal">lulu</span>
           </h2>
           <p className="text-gray-600 text-lg max-w-md">

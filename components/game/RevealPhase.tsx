@@ -16,7 +16,7 @@ type RevealPhaseProps = {
 
 export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
   return (
-    <div key={prompt.promptId} className="flex flex-col items-center gap-6 w-full max-w-2xl">
+    <div key={prompt.promptId} className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
       {/* Progress bar auto-advances after 7s */}
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
@@ -45,7 +45,7 @@ export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
           was drawing:
         </motion.p>
         <motion.h2
-          className="text-4xl font-bold tracking-tight mt-1"
+          className="text-3xl sm:text-4xl font-bold tracking-tight mt-1"
           initial={{ opacity: 0, scale: 0.5, rotate: -4 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ ...WOBBLE, delay: 0.25 }}

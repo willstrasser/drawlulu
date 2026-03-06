@@ -66,7 +66,9 @@ function GameRoom({ code }: { code: string }) {
         if (!r.ok) throw new Error(`GET /api/games/${code} → ${r.status}`);
         return r.json();
       })
-      .then((d) => { if (d.hostUserId) setHostUserId(d.hostUserId); })
+      .then((d) => {
+        if (d.hostUserId) setHostUserId(d.hostUserId);
+      })
       .catch((e) => console.error("[GameRoom] hostUserId fetch failed:", e));
   }, [code]);
 
@@ -137,7 +139,13 @@ function GameRoom({ code }: { code: string }) {
     }
   }, [storageLoaded, self, hostUserId, setHostIdMutation]);
 
-  const { myAssignment, prompts, roundScores, cumulativeScores, promptBreakdowns } = useRoundData({
+  const {
+    myAssignment,
+    prompts,
+    roundScores,
+    cumulativeScores,
+    promptBreakdowns,
+  } = useRoundData({
     gamePhase,
     code,
     setMyPresence,
@@ -237,7 +245,10 @@ function GameRoom({ code }: { code: string }) {
     );
   }
 
-  const showDevPanel = process.env.NODE_ENV === "development";
+  const DEV_USER_IDS = [];
+  const showDevPanel =
+    process.env.NODE_ENV === "development" ||
+    DEV_USER_IDS.includes(user?.userId ?? "");
 
   return (
     <div className="relative z-10 min-h-screen text-gray-900">
@@ -266,7 +277,7 @@ function GameRoom({ code }: { code: string }) {
         </div>
       </nav>
 
-      <main className="flex flex-col items-center justify-center p-8 min-h-[calc(100vh-57px)]">
+      <main className="flex flex-col items-center justify-center p-4 sm:p-8 min-h-[calc(100vh-57px)]">
         <AnimatePresence mode="wait">
           <motion.div
             key={gamePhase ?? "loading"}
@@ -323,7 +334,9 @@ function GameRoom({ code }: { code: string }) {
             {gamePhase === PHASE.REVEALING && prompts && (
               <RevealPhase
                 prompt={prompts[currentPromptIndex ?? 0]}
-                correctGuesses={(currentGuesses ?? []).filter((g) => g.isCorrect)}
+                correctGuesses={(currentGuesses ?? []).filter(
+                  (g) => g.isCorrect,
+                )}
               />
             )}
 
