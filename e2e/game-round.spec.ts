@@ -94,10 +94,12 @@ test("full happy-path round: lobby → prompting → generating → guessing →
 
   // ── LOBBY: host selects category and starts ───────────────────────────────
   // Categories are fetched from /api/categories; wait for the seeded category.
-  await expect(
-    hostPage.getByRole("button", { name: "Test Category" }),
-  ).toBeVisible({ timeout: 10_000 });
-  await hostPage.getByRole("button", { name: "Test Category" }).click();
+  // With many categories the button may be below the fold — scroll it into view
+  // before asserting visibility so the check doesn't fail on a clipped layout.
+  const testCategoryBtn = hostPage.getByRole("button", { name: "Test Category" });
+  await testCategoryBtn.scrollIntoViewIfNeeded();
+  await expect(testCategoryBtn).toBeVisible({ timeout: 10_000 });
+  await testCategoryBtn.click();
 
   const startBtn = hostPage.getByRole("button", { name: "Start Game" });
   await expect(startBtn).toBeEnabled({ timeout: 10_000 });
