@@ -33,6 +33,10 @@ export async function GET(
     .from(prompts)
     .where(eq(prompts.roundId, game.currentRoundId));
 
+  if (!roundPrompts.some((p) => p.userId === user.userId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // All prompts across all rounds (for cumulative)
   const allPrompts = allRoundIds.length > 0
     ? await db.select().from(prompts).where(inArray(prompts.roundId, allRoundIds))

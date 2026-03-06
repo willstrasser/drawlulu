@@ -28,6 +28,10 @@ export async function GET(
     .from(prompts)
     .where(eq(prompts.roundId, game.currentRoundId));
 
+  if (!roundPrompts.some((p) => p.userId === user.userId)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // Batch-load all users referenced by prompts in a single query
   const userIds = [...new Set(roundPrompts.map((p) => p.userId))];
   const userRows = userIds.length > 0

@@ -26,6 +26,7 @@ import type { GamePhase } from "@/liveblocks.config";
 import Link from "next/link";
 import { useRoundData } from "@/hooks/useRoundData";
 import { useGameTimer } from "@/hooks/useGameTimer";
+import { RoomErrorBoundary } from "@/components/game/RoomErrorBoundary";
 
 function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean }) {
   const { user } = useSession();
@@ -145,6 +146,7 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
     roundScores,
     cumulativeScores,
     promptBreakdowns,
+    fetchError,
   } = useRoundData({
     gamePhase,
     code,
@@ -306,10 +308,22 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
             )}
 
             {gamePhase === PHASE.PROMPTING && !myAssignment && (
-              <div className="text-center">
-                <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
-                <p className="text-gray-600">Loading your assignment...</p>
-              </div>
+              fetchError ? (
+                <div className="text-center max-w-sm">
+                  <p className="text-gray-700 mb-4">{fetchError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Reload
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+                  <p className="text-gray-600">Loading your assignment...</p>
+                </div>
+              )
             )}
 
             {gamePhase === PHASE.GENERATING && (
@@ -317,13 +331,25 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
             )}
 
             {gamePhase === PHASE.GUESSING && (
-              <GuessingPhase
-                roomCode={code}
-                prompts={prompts}
-                currentPromptIndex={currentPromptIndex ?? 0}
-                onGuessSubmitted={handleGuessSubmitted}
-                category={selectedCategory ?? ""}
-              />
+              fetchError ? (
+                <div className="text-center max-w-sm">
+                  <p className="text-gray-700 mb-4">{fetchError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Reload
+                  </button>
+                </div>
+              ) : (
+                <GuessingPhase
+                  roomCode={code}
+                  prompts={prompts}
+                  currentPromptIndex={currentPromptIndex ?? 0}
+                  onGuessSubmitted={handleGuessSubmitted}
+                  category={selectedCategory ?? ""}
+                />
+              )
             )}
 
             {gamePhase === PHASE.REVEALING && prompts && (
@@ -336,15 +362,27 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
             )}
 
             {gamePhase === PHASE.SCOREBOARD && (
-              <Scoreboard
-                isHost={isHost}
-                roundNumber={roundNumber ?? 1}
-                roundScores={roundScores}
-                cumulativeScores={cumulativeScores}
-                promptBreakdowns={promptBreakdowns}
-                onPlayAgain={handlePlayAgain}
-                onNewGame={handleNewGame}
-              />
+              fetchError ? (
+                <div className="text-center max-w-sm">
+                  <p className="text-gray-700 mb-4">{fetchError}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Reload
+                  </button>
+                </div>
+              ) : (
+                <Scoreboard
+                  isHost={isHost}
+                  roundNumber={roundNumber ?? 1}
+                  roundScores={roundScores}
+                  cumulativeScores={cumulativeScores}
+                  promptBreakdowns={promptBreakdowns}
+                  onPlayAgain={handlePlayAgain}
+                  onNewGame={handleNewGame}
+                />
+              )
             )}
           </motion.div>
         </AnimatePresence>
@@ -373,26 +411,28 @@ function GamePageInner({ code, showDevPanel }: { code: string; showDevPanel: boo
   }
 
   return (
-    <RoomProvider
-      id={`game-${code}`}
-      initialPresence={{
-        username: "",
-        isReady: false,
-        hasSubmittedPrompt: false,
-      }}
-      initialStorage={{
-        gamePhase: PHASE.LOBBY,
-        currentPromptIndex: 0,
-        timerEndsAt: null,
-        currentGuesses: [] as unknown as Storage["currentGuesses"],
-        hostId: "",
-        selectedCategory: "",
-        roundNumber: 1,
-        newGameCode: "",
-      }}
-    >
-      <GameRoom code={code} showDevPanel={showDevPanel} />
-    </RoomProvider>
+    <RoomErrorBoundary>
+      <RoomProvider
+        id={`game-${code}`}
+        initialPresence={{
+          username: "",
+          isReady: false,
+          hasSubmittedPrompt: false,
+        }}
+        initialStorage={{
+          gamePhase: PHASE.LOBBY,
+          currentPromptIndex: 0,
+          timerEndsAt: null,
+          currentGuesses: [] as unknown as Storage["currentGuesses"],
+          hostId: "",
+          selectedCategory: "",
+          roundNumber: 1,
+          newGameCode: "",
+        }}
+      >
+        <GameRoom code={code} showDevPanel={showDevPanel} />
+      </RoomProvider>
+    </RoomErrorBoundary>
   );
 }
 

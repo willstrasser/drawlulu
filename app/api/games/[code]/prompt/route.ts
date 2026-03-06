@@ -40,6 +40,10 @@ export async function POST(
     return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
   }
 
+  if (prompt.userId !== user.userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // Validate taboo words
   const { sanitizedPrompt, forbiddenWordsUsed } = validateTabooWords(
     promptText,

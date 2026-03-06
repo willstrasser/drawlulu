@@ -18,6 +18,7 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
       roundScores: null,
       cumulativeScores: null,
       promptBreakdowns: null,
+      fetchError: null,
     }),
     [],
   );
@@ -50,13 +51,19 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
     ) {
       fetchingAssignmentRef.current = true;
       fetch(`/api/games/${code}/my-assignment`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.promptId) {
             setRoundData((prev) => ({ ...prev, myAssignment: data as MyAssignment }));
           }
         })
-        .catch((e) => console.error("Failed to fetch assignment:", e))
+        .catch((e) => {
+          console.error("Failed to fetch assignment:", e);
+          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load your assignment. Please reload." }));
+        })
         .finally(() => {
           fetchingAssignmentRef.current = false;
         });
@@ -67,12 +74,18 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
   useEffect(() => {
     if (gamePhase === PHASE.GUESSING && !roundData.prompts) {
       fetch(`/api/games/${code}/round-prompts`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.prompts)
             setRoundData((prev) => ({ ...prev, prompts: data.prompts as PromptEntry[] }));
         })
-        .catch((e) => console.error("Failed to fetch prompts:", e));
+        .catch((e) => {
+          console.error("Failed to fetch prompts:", e);
+          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load game prompts. Please reload." }));
+        });
     }
   }, [gamePhase, code, roundData.prompts]);
 
@@ -80,7 +93,10 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
   useEffect(() => {
     if (gamePhase === PHASE.SCOREBOARD && !roundData.roundScores) {
       fetch(`/api/games/${code}/scores`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.roundScores || data.promptBreakdowns) {
             setRoundData((prev) => ({
@@ -91,7 +107,10 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
             }));
           }
         })
-        .catch((e) => console.error("Failed to fetch scores:", e));
+        .catch((e) => {
+          console.error("Failed to fetch scores:", e);
+          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load scores. Please reload." }));
+        });
     }
   }, [gamePhase, code, roundData.roundScores]);
 

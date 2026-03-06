@@ -38,4 +38,5 @@ export type RoundData = {
   roundScores: PlayerScore[] | null;
   cumulativeScores: PlayerScore[] | null;
   promptBreakdowns: PromptBreakdown[] | null;
+  fetchError: string | null;
 };
