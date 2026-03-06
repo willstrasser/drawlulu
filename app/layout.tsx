@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { VercelToolbar } from "@vercel/toolbar/next";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -17,11 +18,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const shouldInjectToolbar = process.env.NODE_ENV === "development";
+
   return (
     <html lang="en">
-      <body
-        className={`${spaceGrotesk.variable} font-sans antialiased`}
-      >
+      <body className={`${spaceGrotesk.variable} font-sans antialiased`}>
         <div className="riso-blobs">
           <div className="riso-blob riso-blob--teal" />
           <div className="riso-blob riso-blob--red" />
@@ -29,6 +30,7 @@ export default function RootLayout({
           <div className="riso-blob riso-blob--purple" />
         </div>
         {children}
+        {shouldInjectToolbar && <VercelToolbar />}
         <div className="riso-texture" />
       </body>
     </html>

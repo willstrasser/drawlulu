@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createWithVercelToolbar from "@vercel/toolbar/plugins/next";
+
+const withVercelToolbar = createWithVercelToolbar();
 
 const nextConfig: NextConfig = {
   images: {
@@ -26,5 +29,4 @@ const nextConfig: NextConfig = {
     ],
   },
 };
-
-export default nextConfig;
+export default withVercelToolbar(nextConfig);

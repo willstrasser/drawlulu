@@ -8,9 +8,7 @@ const identify = dedupe(async () => {
     await cookies(),
     sessionOptions,
   );
-  const r = { user: session.userId ? { id: session.userId } : undefined };
-  console.log({ r });
-  return r;
+  return { user: session.userId ? { id: session.userId } : undefined };
 });
 
 export const devPanelFlag = flag<boolean>({
