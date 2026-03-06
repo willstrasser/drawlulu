@@ -246,6 +246,7 @@ function GameRoom({ code }: { code: string }) {
   }
 
   const allowListUserIds = process.env.DEV_USER_IDS?.split(",") || [];
+  console.log(allowListUserIds, user?.userId);
   const showDevPanel =
     process.env.NODE_ENV === "development" ||
     allowListUserIds.includes(user?.userId ?? "");
