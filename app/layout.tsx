@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import { VercelToolbar } from "@vercel/toolbar/next";
 import "./globals.css";
 import "@/lib/env"; // validates required env vars at startup
+import { Analytics } from "@vercel/analytics/next";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -32,6 +33,7 @@ export default function RootLayout({
         </div>
         {children}
         {shouldInjectToolbar && <VercelToolbar />}
+        <Analytics />
         <div className="riso-texture" />
       </body>
     </html>
