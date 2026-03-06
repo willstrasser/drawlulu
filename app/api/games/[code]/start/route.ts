@@ -84,20 +84,17 @@ export async function POST(
   // Assign random cards to each player
   const cards = await getWordCardsFromDB(orderedPlayers.length, category);
 
-  const promptEntries = await Promise.all(
-    orderedPlayers.map(async (player, i) => {
-      const [p] = await db
-        .insert(prompts)
-        .values({
-          roundId: round.id,
-          userId: player.id,
-          targetWord: cards[i].objective,
-          tabooWords: cards[i].taboos,
-        })
-        .returning();
-      return p;
-    })
-  );
+  const promptEntries = await db
+    .insert(prompts)
+    .values(
+      orderedPlayers.map((player, i) => ({
+        roundId: round.id,
+        userId: player.id,
+        targetWord: cards[i].objective,
+        tabooWords: cards[i].taboos,
+      }))
+    )
+    .returning();
 
   // Update game to active
   await db
@@ -111,11 +108,11 @@ export async function POST(
     { promptId: string; targetWord: string; tabooWords: string[] }
   > = {};
 
-  for (let i = 0; i < orderedPlayers.length; i++) {
-    assignments[playerUserIds[i]] = {
-      promptId: promptEntries[i].id,
-      targetWord: promptEntries[i].targetWord,
-      tabooWords: promptEntries[i].tabooWords,
+  for (const p of promptEntries) {
+    assignments[p.userId] = {
+      promptId: p.id,
+      targetWord: p.targetWord,
+      tabooWords: p.tabooWords,
     };
   }
 

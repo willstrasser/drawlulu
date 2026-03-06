@@ -22,6 +22,13 @@
       "when": 1772254711542,
       "tag": "0002_busy_dagger",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772771331827,
+      "tag": "0003_damp_magneto",
+      "breakpoints": true
     }
   ]
 }
