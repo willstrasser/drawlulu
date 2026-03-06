@@ -12,7 +12,7 @@ const identify = dedupe(async () => {
 });
 
 export const devPanelFlag = flag<boolean>({
-  key: "has-dev-panel",
+  key: "show-dev-panel",
   identify,
   decide: () => false,
   defaultValue: false,
