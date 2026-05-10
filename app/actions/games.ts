@@ -4,20 +4,13 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { games } from "@/lib/db/schema";
-import { generateRoomCode } from "@/lib/utils";
 import { PHASE } from "@/lib/phases";
 import { getUser } from "@/lib/get-user";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { createLobbyGame } from "@/lib/db/games";
 
 export type ActionState = { error: string | null };
 export const initialActionState: ActionState = { error: null };
-
-function isUniqueViolation(e: unknown): boolean {
-  if (typeof e !== "object" || e === null) return false;
-  const cause = (e as { cause?: unknown }).cause;
-  if (typeof cause !== "object" || cause === null) return false;
-  return (cause as { code?: string }).code === "23505";
-}
 
 export async function createGameAction(): Promise<ActionState> {
   const user = await getUser();
@@ -27,25 +20,7 @@ export async function createGameAction(): Promise<ActionState> {
     return { error: "Too many requests, slow down for a minute." };
   }
 
-  let game: typeof games.$inferSelect | undefined;
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      const [inserted] = await db
-        .insert(games)
-        .values({
-          roomCode: generateRoomCode(),
-          hostId: user.userId,
-          status: PHASE.LOBBY,
-        })
-        .returning();
-      game = inserted;
-      break;
-    } catch (e: unknown) {
-      if (isUniqueViolation(e)) continue;
-      throw e;
-    }
-  }
-
+  const game = await createLobbyGame(user.userId);
   if (!game) return { error: "Failed to generate room code" };
 
   redirect(`/game/${game.roomCode}`);
