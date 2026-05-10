@@ -1,124 +1,90 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { games, rounds, prompts, users } from "@/lib/db/schema";
 import { eq, max, inArray } from "drizzle-orm";
 import { getWordCardsFromDB } from "@/lib/db/word-cards";
-import { getUser } from "@/lib/get-user";
+import { withGameContext } from "@/lib/api/with-game-context";
+import { errorResponse, jsonResponse } from "@/lib/api/json";
+import { parseBody } from "@/lib/api/zod";
+import { StartRequestSchema } from "@/lib/api/types";
 
-const StartSchema = z.object({
-  playerUserIds: z.array(z.string().uuid()).min(2),
-  category: z.string().optional(),
-});
+export const POST = withGameContext(
+  { requireHost: true },
+  async (request, { game }) => {
+    const parsed = await parseBody(request, StartRequestSchema);
+    if (!parsed.ok) return parsed.response;
+    const { playerUserIds, category } = parsed.data;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  const { code } = await params;
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const playerUsers = await db
+      .select()
+      .from(users)
+      .where(inArray(users.id, playerUserIds));
 
-  const [game] = await db
-    .select()
-    .from(games)
-    .where(eq(games.roomCode, code));
+    if (playerUsers.length < 2)
+      return errorResponse("Not enough registered players", 400);
 
-  if (!game) {
-    return NextResponse.json({ error: "Game not found" }, { status: 404 });
-  }
+    // Preserve order from the request — single Map lookup beats find() per id.
+    const byId = new Map(playerUsers.map((u) => [u.id, u]));
+    const orderedPlayers = playerUserIds
+      .map((id) => byId.get(id))
+      .filter((u): u is typeof playerUsers[number] => Boolean(u));
 
-  // Verify caller is host
-  if (user.userId !== game.hostId) {
-    return NextResponse.json({ error: "Only host can start" }, { status: 403 });
-  }
+    const [{ maxRound }] = await db
+      .select({ maxRound: max(rounds.roundNumber) })
+      .from(rounds)
+      .where(eq(rounds.gameId, game.id));
 
-  // Player user IDs are Liveblocks IDs, which are our user UUIDs
-  const parsed = StartSchema.safeParse(await request.json());
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid request", details: parsed.error.flatten() },
-      { status: 400 }
-    );
-  }
-  const { playerUserIds, category } = parsed.data;
+    const nextRoundNumber = (maxRound ?? 0) + 1;
 
-  // Load all players from DB
-  const playerUsers = await db
-    .select()
-    .from(users)
-    .where(inArray(users.id, playerUserIds));
+    const cards = await getWordCardsFromDB(orderedPlayers.length, category);
 
-  if (playerUsers.length < 2) {
-    return NextResponse.json(
-      { error: "Not enough registered players" },
-      { status: 400 }
-    );
-  }
+    // Round + prompts must commit atomically. Without this, a failed prompts
+    // insert would leave an orphan round visible to the rest of the game.
+    const { round, promptEntries } = await db.transaction(async (tx) => {
+      const [round] = await tx
+        .insert(rounds)
+        .values({
+          gameId: game.id,
+          roundNumber: nextRoundNumber,
+          status: "prompting",
+        })
+        .returning();
 
-  // Preserve order matching playerUserIds
-  const orderedPlayers = playerUserIds
-    .map((id) => playerUsers.find((u) => u.id === id))
-    .filter(Boolean) as (typeof playerUsers)[number][];
+      const promptEntries = await tx
+        .insert(prompts)
+        .values(
+          orderedPlayers.map((player, i) => ({
+            roundId: round.id,
+            userId: player.id,
+            targetWord: cards[i].objective,
+            tabooWords: cards[i].taboos,
+          })),
+        )
+        .returning();
 
-  // Query max roundNumber for this game and increment
-  const [{ maxRound }] = await db
-    .select({ maxRound: max(rounds.roundNumber) })
-    .from(rounds)
-    .where(eq(rounds.gameId, game.id));
+      await tx
+        .update(games)
+        .set({ status: "active", currentRoundId: round.id })
+        .where(eq(games.id, game.id));
 
-  const nextRoundNumber = (maxRound ?? 0) + 1;
+      return { round, promptEntries };
+    });
 
-  // Create round
-  const [round] = await db
-    .insert(rounds)
-    .values({
-      gameId: game.id,
+    const assignments: Record<
+      string,
+      { promptId: string; targetWord: string; tabooWords: string[] }
+    > = {};
+    for (const p of promptEntries) {
+      assignments[p.userId] = {
+        promptId: p.id,
+        targetWord: p.targetWord,
+        tabooWords: p.tabooWords,
+      };
+    }
+
+    return jsonResponse({
+      roundId: round.id,
       roundNumber: nextRoundNumber,
-      status: "prompting",
-    })
-    .returning();
-
-  // Assign random cards to each player
-  const cards = await getWordCardsFromDB(orderedPlayers.length, category);
-
-  const promptEntries = await db
-    .insert(prompts)
-    .values(
-      orderedPlayers.map((player, i) => ({
-        roundId: round.id,
-        userId: player.id,
-        targetWord: cards[i].objective,
-        tabooWords: cards[i].taboos,
-      }))
-    )
-    .returning();
-
-  // Update game to active
-  await db
-    .update(games)
-    .set({ status: "active", currentRoundId: round.id })
-    .where(eq(games.id, game.id));
-
-  // Return prompt assignments keyed by userId (UUID)
-  const assignments: Record<
-    string,
-    { promptId: string; targetWord: string; tabooWords: string[] }
-  > = {};
-
-  for (const p of promptEntries) {
-    assignments[p.userId] = {
-      promptId: p.id,
-      targetWord: p.targetWord,
-      tabooWords: p.tabooWords,
-    };
-  }
-
-  return NextResponse.json({
-    roundId: round.id,
-    roundNumber: nextRoundNumber,
-    assignments,
-  });
-}
+      assignments,
+    });
+  },
+);

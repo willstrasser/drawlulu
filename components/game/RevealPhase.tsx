@@ -5,9 +5,7 @@ import { motion } from "motion/react";
 import type { PromptEntry } from "@/lib/game-types";
 import type { GuessEntry } from "@/liveblocks.config";
 import { AnnotatedPrompt } from "./AnnotatedPrompt";
-
-const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
-const BOUNCY = { type: "spring", stiffness: 500, damping: 28 } as const;
+import { WOBBLE, BOUNCY } from "@/components/ui/motion-presets";
 
 type RevealPhaseProps = {
   prompt: PromptEntry;

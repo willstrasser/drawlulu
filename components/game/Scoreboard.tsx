@@ -4,8 +4,7 @@ import { motion } from "motion/react";
 import type { PlayerScore, PromptBreakdown } from "@/lib/game-types";
 import Image from "next/image";
 import { AnnotatedPrompt } from "./AnnotatedPrompt";
-
-const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
+import { WOBBLE, SETTLE } from "@/components/ui/motion-presets";
 
 type ScoreboardProps = {
   isHost: boolean;
@@ -32,7 +31,7 @@ function ScoreList({ scores }: { scores: PlayerScore[] }) {
           initial={{ opacity: 0, x: -20, rotate: i === 0 ? -2.5 : -1.5 }}
           animate={{ opacity: 1, x: 0, rotate: 0, scale: i === 0 ? [1, 1.04, 1] : 1 }}
           transition={{
-            ...{ type: "spring", stiffness: 380, damping: 26 },
+            ...SETTLE,
             delay: i * 0.08,
             scale: i === 0 ? { delay: i * 0.08 + 0.3, duration: 0.4 } : undefined,
           }}
@@ -120,7 +119,7 @@ export function Scoreboard({
                 className="bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 rounded-xl p-4 space-y-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 380, damping: 26, delay: index * 0.1 }}
+                transition={{ ...SETTLE, delay: index * 0.1 }}
               >
                 <div className="flex items-center gap-3">
                   {b.imageUrl && (

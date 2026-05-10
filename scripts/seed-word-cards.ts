@@ -2,17 +2,12 @@ import "dotenv/config";
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as schema from "../lib/db/schema";
+import type { WordCard } from "../lib/cards";
 
 const sql = neon(process.env.DATABASE_URL!);
 const db = drizzle(sql, { schema });
 
-type Card = {
-  objective: string;
-  category: string;
-  taboos: { word: string; relevancyScore: number }[];
-};
-
-const cards: Card[] = [
+const cards: WordCard[] = [
   // ── Food & Drink ────────────────────────────────────────────────────────────
   {
     objective: "Sushi",

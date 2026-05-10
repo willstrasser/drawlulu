@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { Timer } from "./Timer";
-
-const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
-const BOUNCY = { type: "spring", stiffness: 500, damping: 28 } as const;
+import { WOBBLE, BOUNCY } from "@/components/ui/motion-presets";
+import { log } from "@/lib/logger";
 
 type PromptPhaseProps = {
   targetWord: string;
@@ -45,7 +44,7 @@ export function PromptPhase({
       setResult({ forbiddenWordsUsed: data.forbiddenWordsUsed || [] });
       onSubmitted();
     } catch (e) {
-      console.error("Failed to submit prompt:", e);
+      log.error("PromptPhase", "Failed to submit prompt", e);
     } finally {
       setSubmitting(false);
     }

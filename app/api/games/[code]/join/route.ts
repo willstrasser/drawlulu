@@ -1,36 +1,10 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { games } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
 import { PHASE } from "@/lib/phases";
-import { getUser } from "@/lib/get-user";
+import { withGameContext } from "@/lib/api/with-game-context";
+import { errorResponse, jsonResponse } from "@/lib/api/json";
 
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  const { code } = await params;
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Check game exists and is in lobby
-  const [game] = await db
-    .select()
-    .from(games)
-    .where(eq(games.roomCode, code));
-
-  if (!game) {
-    return NextResponse.json({ error: "Game not found" }, { status: 404 });
-  }
-
+export const POST = withGameContext({}, async (_request, { game }) => {
   if (game.status !== PHASE.LOBBY) {
-    return NextResponse.json(
-      { error: "Game already in progress" },
-      { status: 400 }
-    );
+    return errorResponse("Game already in progress", 400);
   }
-
-  return NextResponse.json({ roomCode: game.roomCode, gameId: game.id });
-}
+  return jsonResponse({ roomCode: game.roomCode, gameId: game.id });
+});

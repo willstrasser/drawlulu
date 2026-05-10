@@ -3,36 +3,11 @@ import { timingSafeEqual } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
 import { wordCards } from "@/lib/db/schema";
+import { isWordCard, type WordCard } from "@/lib/cards";
+import { log } from "@/lib/logger";
 
 const client = new Anthropic();
 const NUM_NEW_CARDS = 10;
-
-type TabooEntry = { word: string; relevancyScore: number };
-type GeneratedCard = {
-  objective: string;
-  category: string;
-  taboos: TabooEntry[];
-};
-
-function isTabooEntry(v: unknown): v is TabooEntry {
-  return (
-    typeof v === "object" &&
-    v !== null &&
-    typeof (v as Record<string, unknown>).word === "string" &&
-    typeof (v as Record<string, unknown>).relevancyScore === "number"
-  );
-}
-
-function isGeneratedCard(v: unknown): v is GeneratedCard {
-  if (typeof v !== "object" || v === null) return false;
-  const c = v as Record<string, unknown>;
-  return (
-    typeof c.objective === "string" &&
-    typeof c.category === "string" &&
-    Array.isArray(c.taboos) &&
-    c.taboos.every(isTabooEntry)
-  );
-}
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -49,11 +24,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const webSearchTool: Anthropic.Messages.WebSearchTool20250305 = {
+    type: "web_search_20250305",
+    name: "web_search",
+  };
+
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tools: [{ type: "web_search_20250305", name: "web_search" }] as any,
+    tools: [webSearchTool],
     messages: [
       {
         role: "user",
@@ -99,18 +78,18 @@ Rules:
     .replace(/\s*```\s*$/, "")
     .trim();
 
-  let cards: GeneratedCard[];
+  let cards: WordCard[];
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed) || !parsed.every(isGeneratedCard)) {
+    if (!Array.isArray(parsed) || !parsed.every(isWordCard)) {
       return NextResponse.json(
-        { error: "Response did not match GeneratedCard[]" },
+        { error: "Response did not match WordCard[]" },
         { status: 500 },
       );
     }
     cards = parsed;
   } catch (error) {
-    console.error("Failed to parse generated cards JSON:", error);
+    log.error("cron/generate-cards", "Failed to parse generated cards JSON", error);
     return NextResponse.json(
       { error: "Invalid JSON response from Claude" },
       { status: 500 },

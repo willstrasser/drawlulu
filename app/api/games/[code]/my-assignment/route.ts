@@ -1,45 +1,25 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, prompts } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
-import { getUser } from "@/lib/get-user";
+import { prompts } from "@/lib/db/schema";
+import { and, eq } from "drizzle-orm";
+import { withGameContext } from "@/lib/api/with-game-context";
+import { errorResponse, jsonResponse } from "@/lib/api/json";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  const { code } = await params;
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withGameContext(
+  { requireRound: true, requirePlayer: true },
+  async (_request, { user, round }) => {
+    const [prompt] = await db
+      .select()
+      .from(prompts)
+      .where(
+        and(eq(prompts.roundId, round!.id), eq(prompts.userId, user.userId)),
+      );
 
-  const [game] = await db
-    .select()
-    .from(games)
-    .where(eq(games.roomCode, code));
+    if (!prompt) return errorResponse("No assignment found", 404);
 
-  if (!game || !game.currentRoundId) {
-    return NextResponse.json({ error: "No active round" }, { status: 404 });
-  }
-
-  const [prompt] = await db
-    .select()
-    .from(prompts)
-    .where(
-      and(
-        eq(prompts.roundId, game.currentRoundId),
-        eq(prompts.userId, user.userId)
-      )
-    );
-
-  if (!prompt) {
-    return NextResponse.json({ error: "No assignment found" }, { status: 404 });
-  }
-
-  return NextResponse.json({
-    promptId: prompt.id,
-    targetWord: prompt.targetWord,
-    tabooWords: prompt.tabooWords,
-  });
-}
+    return jsonResponse({
+      promptId: prompt.id,
+      targetWord: prompt.targetWord,
+      tabooWords: prompt.tabooWords,
+    });
+  },
+);

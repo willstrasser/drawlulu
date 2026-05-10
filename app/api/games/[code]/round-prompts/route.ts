@@ -1,57 +1,37 @@
-import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { games, prompts, users } from "@/lib/db/schema";
+import { prompts, users } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
-import { getUser } from "@/lib/get-user";
+import { withGameContext } from "@/lib/api/with-game-context";
+import { jsonResponse } from "@/lib/api/json";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  const { code } = await params;
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withGameContext(
+  { requireRound: true, requirePlayer: true },
+  async (_request, { round }) => {
+    const roundPrompts = await db
+      .select()
+      .from(prompts)
+      .where(eq(prompts.roundId, round!.id));
 
-  const [game] = await db
-    .select()
-    .from(games)
-    .where(eq(games.roomCode, code));
+    const userIds = [...new Set(roundPrompts.map((p) => p.userId))];
+    const userRows = userIds.length > 0
+      ? await db.select().from(users).where(inArray(users.id, userIds))
+      : [];
+    const userMap = new Map(userRows.map((u) => [u.id, u]));
 
-  if (!game || !game.currentRoundId) {
-    return NextResponse.json({ error: "No active round" }, { status: 404 });
-  }
+    const promptsWithUsers = roundPrompts.map((p) => {
+      const u = userMap.get(p.userId);
+      return {
+        promptId: p.id,
+        userId: u?.id ?? "",
+        username: u?.username ?? "Unknown",
+        targetWord: p.targetWord,
+        tabooWords: p.tabooWords,
+        imageUrl: p.imageUrl,
+        forbiddenWordsUsed: p.forbiddenWordsUsed || [],
+        sanitizedPrompt: p.sanitizedPrompt,
+      };
+    });
 
-  const roundPrompts = await db
-    .select()
-    .from(prompts)
-    .where(eq(prompts.roundId, game.currentRoundId));
-
-  if (!roundPrompts.some((p) => p.userId === user.userId)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  // Batch-load all users referenced by prompts in a single query
-  const userIds = [...new Set(roundPrompts.map((p) => p.userId))];
-  const userRows = userIds.length > 0
-    ? await db.select().from(users).where(inArray(users.id, userIds))
-    : [];
-  const userMap = new Map(userRows.map((u) => [u.id, u]));
-
-  const promptsWithUsers = roundPrompts.map((p) => {
-    const u = userMap.get(p.userId);
-    return {
-      promptId: p.id,
-      userId: u?.id ?? "",
-      username: u?.username ?? "Unknown",
-      targetWord: p.targetWord,
-      tabooWords: p.tabooWords,
-      imageUrl: p.imageUrl,
-      forbiddenWordsUsed: p.forbiddenWordsUsed || [],
-      sanitizedPrompt: p.sanitizedPrompt,
-    };
-  });
-
-  return NextResponse.json({ prompts: promptsWithUsers });
-}
+    return jsonResponse({ prompts: promptsWithUsers });
+  },
+);

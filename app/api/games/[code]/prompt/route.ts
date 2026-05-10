@@ -1,68 +1,45 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { prompts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateTabooWords } from "@/lib/utils";
-import { getUser } from "@/lib/get-user";
+import { withGameContext } from "@/lib/api/with-game-context";
+import { errorResponse, jsonResponse } from "@/lib/api/json";
+import { parseBody } from "@/lib/api/zod";
+import { PromptRequestSchema } from "@/lib/api/types";
 
-const PromptSchema = z.object({
-  promptId: z.string().uuid(),
-  promptText: z.string().min(1).max(1000),
-});
+export const POST = withGameContext(
+  { requireRound: true, requirePlayer: true },
+  async (request, { user }) => {
+    const parsed = await parseBody(request, PromptRequestSchema);
+    if (!parsed.ok) return parsed.response;
+    const { promptId, promptText } = parsed.data;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  await params;
-  const user = await getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const [prompt] = await db
+      .select()
+      .from(prompts)
+      .where(eq(prompts.id, promptId));
 
-  const parsed = PromptSchema.safeParse(await request.json());
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid request", details: parsed.error.flatten() },
-      { status: 400 }
+    if (!prompt) return errorResponse("Prompt not found", 404);
+    if (prompt.userId !== user.userId) return errorResponse("Forbidden", 403);
+
+    const { sanitizedPrompt, forbiddenWordsUsed } = validateTabooWords(
+      promptText,
+      prompt.tabooWords,
     );
-  }
-  const { promptId, promptText } = parsed.data;
 
-  // Get the prompt entry
-  const [prompt] = await db
-    .select()
-    .from(prompts)
-    .where(eq(prompts.id, promptId));
+    const [updated] = await db
+      .update(prompts)
+      .set({
+        originalPrompt: promptText,
+        sanitizedPrompt,
+        forbiddenWordsUsed,
+      })
+      .where(eq(prompts.id, promptId))
+      .returning();
 
-  if (!prompt) {
-    return NextResponse.json({ error: "Prompt not found" }, { status: 404 });
-  }
-
-  if (prompt.userId !== user.userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  // Validate taboo words
-  const { sanitizedPrompt, forbiddenWordsUsed } = validateTabooWords(
-    promptText,
-    prompt.tabooWords
-  );
-
-  // Update prompt in DB
-  const [updated] = await db
-    .update(prompts)
-    .set({
-      originalPrompt: promptText,
-      sanitizedPrompt,
-      forbiddenWordsUsed,
-    })
-    .where(eq(prompts.id, promptId))
-    .returning();
-
-  return NextResponse.json({
-    sanitizedPrompt: updated.sanitizedPrompt,
-    forbiddenWordsUsed: updated.forbiddenWordsUsed,
-  });
-}
+    return jsonResponse({
+      sanitizedPrompt: updated.sanitizedPrompt,
+      forbiddenWordsUsed: updated.forbiddenWordsUsed,
+    });
+  },
+);

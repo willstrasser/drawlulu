@@ -1,4 +1,5 @@
 import { devPanelFlag } from "@/flags";
+import { log } from "@/lib/logger";
 import GamePage from "./GamePage";
 
 export default async function Page({
@@ -8,6 +9,6 @@ export default async function Page({
 }) {
   const { code } = await params;
   const showDevPanel = await devPanelFlag();
-  console.log(`[GamePage] showDevPanel=${showDevPanel}`); // Debug log to verify flag value
+  log.info("game/page", `showDevPanel=${showDevPanel}`);
   return <GamePage code={code} showDevPanel={showDevPanel} />;
 }

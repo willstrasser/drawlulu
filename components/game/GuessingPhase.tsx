@@ -7,8 +7,8 @@ import { Timer } from "./Timer";
 import type { GuessEntry } from "@/liveblocks.config";
 import type { PromptEntry } from "@/lib/game-types";
 import Image from "next/image";
-
-const BOUNCY = { type: "spring", stiffness: 500, damping: 28 } as const;
+import { BOUNCY } from "@/components/ui/motion-presets";
+import { log } from "@/lib/logger";
 
 type GuessingPhaseProps = {
   roomCode: string;
@@ -78,7 +78,7 @@ export function GuessingPhase({
       });
       setGuessText("");
     } catch (e) {
-      console.error("Failed to submit guess:", e);
+      log.error("GuessingPhase", "Failed to submit guess", e);
     } finally {
       setSubmitting(false);
     }

@@ -4,6 +4,7 @@ import { useOthers, useSelf } from "@/liveblocks.config";
 import { PlayerList } from "./PlayerList";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { log } from "@/lib/logger";
 
 type LobbyProps = {
   roomCode: string;
@@ -29,7 +30,7 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
       ].filter(Boolean) as string[];
       await onStart(playerUserIds);
     } catch (e) {
-      console.error("Failed to start:", e);
+      log.error("Lobby", "Failed to start", e);
       setStarting(false);
     }
   };

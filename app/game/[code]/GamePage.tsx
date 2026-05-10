@@ -1,38 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   RoomProvider,
   useMyPresence,
   useStorage,
-  useMutation,
   useOthers,
   useSelf,
+  PHASE,
 } from "@/liveblocks.config";
-import { PHASE } from "@/liveblocks.config";
-import type { GuessEntry, Storage } from "@/liveblocks.config";
+import type { GuessEntry, GamePhase } from "@/liveblocks.config";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
-import { Lobby } from "@/components/game/Lobby";
-import { PromptPhase } from "@/components/game/PromptPhase";
-import { GeneratingPhase } from "@/components/game/GeneratingPhase";
-import { GuessingPhase } from "@/components/game/GuessingPhase";
-import { Scoreboard } from "@/components/game/Scoreboard";
-import { RevealPhase } from "@/components/game/RevealPhase";
 import { DevPanel } from "@/components/game/DevPanel";
 import { UsernameModal } from "@/components/game/UsernameModal";
-import type { GamePhase } from "@/liveblocks.config";
+import { RoomErrorBoundary } from "@/components/game/RoomErrorBoundary";
 import Link from "next/link";
 import { useRoundData } from "@/hooks/useRoundData";
 import { useGameTimer } from "@/hooks/useGameTimer";
-import { RoomErrorBoundary } from "@/components/game/RoomErrorBoundary";
+import { useStorageMutations } from "@/hooks/useStorageMutations";
+import { useGameMeta } from "@/hooks/useGameMeta";
+import { useGameActions } from "@/hooks/useGameActions";
+import { PHASE_SPRING } from "@/components/ui/motion-presets";
+import { PhaseRouter } from "./PhaseRouter";
 
-function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean }) {
+function GameRoom({
+  code,
+  showDevPanel,
+}: {
+  code: string;
+  showDevPanel: boolean;
+}) {
   const { user } = useSession();
   const self = useSelf();
   const others = useOthers();
   const router = useRouter();
+
   const gamePhase = useStorage((root) => root.gamePhase);
   const hostId = useStorage((root) => root.hostId);
   const currentPromptIndex = useStorage((root) => root.currentPromptIndex);
@@ -43,35 +47,42 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
   const currentGuesses = useStorage((root) => root.currentGuesses);
 
   const [myPresence, setMyPresence] = useMyPresence();
-
-  // Presence is the source of truth; derive locally to avoid duplicate state
   const hasSubmittedPrompt = myPresence?.hasSubmittedPrompt ?? false;
 
   const isHost = self?.id === hostId;
   const storageLoaded = gamePhase !== null;
 
-  const [categories, setCategories] = useState<string[]>([]);
-  // Authoritative host user ID fetched from the DB — eliminates the race
-  // condition where any player who connects first could win the hostId write.
-  const [hostUserId, setHostUserId] = useState<string>("");
+  const { categories, hostUserId } = useGameMeta(code);
 
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then((d) => setCategories(d.categories ?? []));
-  }, []);
+  const mutations = useStorageMutations();
+  const {
+    setGamePhase,
+    setTimerEndsAt,
+    setCurrentPromptIndex,
+    setHostId,
+    setSelectedCategory,
+    clearGuesses,
+  } = mutations;
 
-  useEffect(() => {
-    fetch(`/api/games/${code}`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`GET /api/games/${code} → ${r.status}`);
-        return r.json();
-      })
-      .then((d) => {
-        if (d.hostUserId) setHostUserId(d.hostUserId);
-      })
-      .catch((e) => console.error("[GameRoom] hostUserId fetch failed:", e));
-  }, [code]);
+  const {
+    handleStart,
+    handleNewGame,
+    handleGuessSubmitted,
+    handlePromptSubmitted,
+    handleSkipGeneration,
+  } = useGameActions({
+    code,
+    selectedCategory,
+    setMyPresence,
+    storageMutations: mutations,
+  });
+
+  const handlePlayAgain = async () => {
+    const allUserIds = [self?.id, ...others.map((o) => o.id)].filter(
+      (id): id is string => Boolean(id),
+    );
+    await handleStart(allUserIds);
+  };
 
   // Set username on join
   useEffect(() => {
@@ -85,60 +96,21 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
     }
   }, [user, setMyPresence]);
 
-  // Liveblocks mutations (only ephemeral state)
-  const setGamePhase = useMutation(({ storage }, phase: string) => {
-    storage.set("gamePhase", phase as Storage["gamePhase"]);
-  }, []);
-
-  const setTimerEndsAt = useMutation(({ storage }, endsAt: number | null) => {
-    storage.set("timerEndsAt", endsAt);
-  }, []);
-
-  const setCurrentPromptIndex = useMutation(({ storage }, index: number) => {
-    storage.set("currentPromptIndex", index);
-  }, []);
-
-  const setHostIdMutation = useMutation(({ storage }, id: string) => {
-    storage.set("hostId", id);
-  }, []);
-
-  const setSelectedCategory = useMutation(({ storage }, category: string) => {
-    storage.set("selectedCategory", category);
-  }, []);
-
-  const setRoundNumber = useMutation(({ storage }, n: number) => {
-    storage.set("roundNumber", n);
-  }, []);
-
-  const setNewGameCode = useMutation(({ storage }, code: string) => {
-    storage.set("newGameCode", code);
-  }, []);
-
-  const addGuess = useMutation(({ storage }, guess: GuessEntry) => {
-    const currentGuesses = storage.get("currentGuesses");
-    if (Array.isArray(currentGuesses)) {
-      storage.set("currentGuesses", [
-        ...(currentGuesses as unknown as GuessEntry[]),
-        guess,
-      ] as unknown as Storage["currentGuesses"]);
-    } else {
-      storage.set("currentGuesses", [
-        guess,
-      ] as unknown as Storage["currentGuesses"]);
-    }
-  }, []);
-
-  const clearGuesses = useMutation(({ storage }) => {
-    storage.set("currentGuesses", [] as unknown as Storage["currentGuesses"]);
-  }, []);
-
-  // Set host — only runs when the API-verified hostUserId confirms this user
-  // is the actual host, avoiding the first-writer race condition.
+  // Authoritative host ID — only the verified DB host writes to storage,
+  // closing the first-writer race that previously elected whichever player
+  // connected first.
   useEffect(() => {
     if (storageLoaded && hostUserId && self?.id === hostUserId) {
-      setHostIdMutation(self.id as string);
+      setHostId(self.id);
     }
-  }, [storageLoaded, self, hostUserId, setHostIdMutation]);
+  }, [storageLoaded, self, hostUserId, setHostId]);
+
+  // Non-host clients follow the host into a freshly created game.
+  useEffect(() => {
+    if (newGameCode && newGameCode !== code) {
+      router.push(`/game/${newGameCode}`);
+    }
+  }, [newGameCode, code, router]);
 
   const {
     myAssignment,
@@ -147,11 +119,7 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
     cumulativeScores,
     promptBreakdowns,
     fetchError,
-  } = useRoundData({
-    gamePhase,
-    code,
-    setMyPresence,
-  });
+  } = useRoundData({ gamePhase, code, setMyPresence });
 
   useGameTimer({
     isHost,
@@ -166,59 +134,7 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
     clearGuesses,
   });
 
-  // Handle game start (host only)
-  const handleStart = async (playerUserIds: string[]) => {
-    const res = await fetch(`/api/games/${code}/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ playerUserIds, category: selectedCategory }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-
-    setRoundNumber(data.roundNumber);
-    setMyPresence({ hasSubmittedPrompt: false });
-    setGamePhase(PHASE.PROMPTING);
-    setTimerEndsAt(Date.now() + 60000);
-  };
-
-  const handleNewGame = async () => {
-    const res = await fetch("/api/games", { method: "POST" });
-    const { roomCode } = await res.json();
-    setNewGameCode(roomCode);
-    router.push(`/game/${roomCode}`);
-  };
-
-  // Redirect all non-host players when host starts a new game
-  useEffect(() => {
-    if (newGameCode && newGameCode !== code) {
-      router.push(`/game/${newGameCode}`);
-    }
-  }, [newGameCode, code, router]);
-
-  const handleGuessSubmitted = (guess: GuessEntry) => {
-    addGuess(guess);
-  };
-
-  const handlePlayAgain = async () => {
-    const allUserIds = [self?.id, ...others.map((o) => o.id)].filter(
-      Boolean,
-    ) as string[];
-    await handleStart(allUserIds);
-  };
-
-  const handlePromptSubmitted = () => {
-    setMyPresence({ hasSubmittedPrompt: true });
-  };
-
-  const handleSkipGeneration = () => {
-    setCurrentPromptIndex(0);
-    clearGuesses();
-    setGamePhase(PHASE.GUESSING);
-    setTimerEndsAt(Date.now() + 30000);
-  };
-
-  // Skip timer when all players have submitted prompts
+  // Skip timer when all players have submitted their prompts.
   const allSubmitted =
     gamePhase === PHASE.PROMPTING &&
     self?.presence.hasSubmittedPrompt &&
@@ -231,7 +147,6 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
       timerEndsAt &&
       timerEndsAt > Date.now() + 500
     ) {
-      // Expire the timer immediately — the existing timer effect will pick it up
       setTimerEndsAt(Date.now());
     }
   }, [isHost, allSubmitted, timerEndsAt, setTimerEndsAt]);
@@ -281,109 +196,33 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
             initial={{ opacity: 0, y: 20, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+            transition={PHASE_SPRING}
             className="flex flex-col items-center justify-center w-full"
           >
-            {gamePhase === PHASE.LOBBY && (
-              <Lobby
-                roomCode={code}
-                isHost={isHost}
-                onStart={handleStart}
-                categories={categories}
-                selectedCategory={selectedCategory ?? ""}
-                onSelectCategory={setSelectedCategory}
-              />
-            )}
-
-            {gamePhase === PHASE.PROMPTING && myAssignment && (
-              <PromptPhase
-                targetWord={myAssignment.targetWord}
-                tabooWords={myAssignment.tabooWords}
-                promptId={myAssignment.promptId}
-                roomCode={code}
-                onSubmitted={handlePromptSubmitted}
-                hasSubmitted={hasSubmittedPrompt}
-                category={selectedCategory ?? ""}
-              />
-            )}
-
-            {gamePhase === PHASE.PROMPTING && !myAssignment && (
-              fetchError ? (
-                <div className="text-center max-w-sm">
-                  <p className="text-gray-700 mb-4">{fetchError}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Reload
-                  </button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
-                  <p className="text-gray-600">Loading your assignment...</p>
-                </div>
-              )
-            )}
-
-            {gamePhase === PHASE.GENERATING && (
-              <GeneratingPhase isHost={isHost} onSkip={handleSkipGeneration} />
-            )}
-
-            {gamePhase === PHASE.GUESSING && (
-              fetchError ? (
-                <div className="text-center max-w-sm">
-                  <p className="text-gray-700 mb-4">{fetchError}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Reload
-                  </button>
-                </div>
-              ) : (
-                <GuessingPhase
-                  roomCode={code}
-                  prompts={prompts}
-                  currentPromptIndex={currentPromptIndex ?? 0}
-                  onGuessSubmitted={handleGuessSubmitted}
-                  category={selectedCategory ?? ""}
-                />
-              )
-            )}
-
-            {gamePhase === PHASE.REVEALING && prompts && (
-              <RevealPhase
-                prompt={prompts[currentPromptIndex ?? 0]}
-                correctGuesses={(currentGuesses ?? []).filter(
-                  (g) => g.isCorrect,
-                )}
-              />
-            )}
-
-            {gamePhase === PHASE.SCOREBOARD && (
-              fetchError ? (
-                <div className="text-center max-w-sm">
-                  <p className="text-gray-700 mb-4">{fetchError}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Reload
-                  </button>
-                </div>
-              ) : (
-                <Scoreboard
-                  isHost={isHost}
-                  roundNumber={roundNumber ?? 1}
-                  roundScores={roundScores}
-                  cumulativeScores={cumulativeScores}
-                  promptBreakdowns={promptBreakdowns}
-                  onPlayAgain={handlePlayAgain}
-                  onNewGame={handleNewGame}
-                />
-              )
-            )}
+            <PhaseRouter
+              gamePhase={gamePhase}
+              isHost={isHost}
+              code={code}
+              currentPromptIndex={currentPromptIndex}
+              currentGuesses={currentGuesses}
+              roundNumber={roundNumber}
+              selectedCategory={selectedCategory}
+              myAssignment={myAssignment}
+              prompts={prompts}
+              roundScores={roundScores}
+              cumulativeScores={cumulativeScores}
+              promptBreakdowns={promptBreakdowns}
+              fetchError={fetchError}
+              hasSubmittedPrompt={hasSubmittedPrompt}
+              categories={categories}
+              onStart={handleStart}
+              onSelectCategory={setSelectedCategory}
+              onPromptSubmitted={handlePromptSubmitted}
+              onGuessSubmitted={handleGuessSubmitted}
+              onSkipGeneration={handleSkipGeneration}
+              onPlayAgain={handlePlayAgain}
+              onNewGame={handleNewGame}
+            />
           </motion.div>
         </AnimatePresence>
       </main>
@@ -391,7 +230,13 @@ function GameRoom({ code, showDevPanel }: { code: string; showDevPanel: boolean 
   );
 }
 
-function GamePageInner({ code, showDevPanel }: { code: string; showDevPanel: boolean }) {
+function GamePageInner({
+  code,
+  showDevPanel,
+}: {
+  code: string;
+  showDevPanel: boolean;
+}) {
   const { user, loading, refresh } = useSession();
 
   if (loading) {
@@ -423,7 +268,7 @@ function GamePageInner({ code, showDevPanel }: { code: string; showDevPanel: boo
           gamePhase: PHASE.LOBBY,
           currentPromptIndex: 0,
           timerEndsAt: null,
-          currentGuesses: [] as unknown as Storage["currentGuesses"],
+          currentGuesses: [] satisfies GuessEntry[],
           hostId: "",
           selectedCategory: "",
           roundNumber: 1,
@@ -436,6 +281,12 @@ function GamePageInner({ code, showDevPanel }: { code: string; showDevPanel: boo
   );
 }
 
-export default function GamePage({ code, showDevPanel }: { code: string; showDevPanel: boolean }) {
+export default function GamePage({
+  code,
+  showDevPanel,
+}: {
+  code: string;
+  showDevPanel: boolean;
+}) {
   return <GamePageInner code={code} showDevPanel={showDevPanel} />;
 }

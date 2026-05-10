@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { PHASE } from "@/liveblocks.config";
+import type { GamePhase } from "@/liveblocks.config";
 import type { PromptEntry } from "@/lib/game-types";
+import { log } from "@/lib/logger";
 
 type UseGameTimerProps = {
   isHost: boolean;
   code: string;
-  gamePhase: string | null;
+  gamePhase: GamePhase | null;
   currentPromptIndex: number | null;
   prompts: PromptEntry[] | null;
   timerEndsAt: number | null;
-  setGamePhase: (phase: string) => void;
+  setGamePhase: (phase: GamePhase) => void;
   setTimerEndsAt: (endsAt: number | null) => void;
   setCurrentPromptIndex: (index: number) => void;
   clearGuesses: () => void;
@@ -65,7 +67,7 @@ export function useGameTimer({
           clearTimeout(timeout);
         }
       } catch (e) {
-        console.error("[useGameTimer] Image generation failed, advancing anyway:", e);
+        log.error("useGameTimer", "Image generation failed, advancing anyway", e);
       }
       // Always advance — images that failed show "No image generated"
       setCurrentPromptIndex(0);
