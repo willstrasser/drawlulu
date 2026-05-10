@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { motion } from "motion/react";
 import { signInAsGuest, initialGuestSignupState } from "@/app/actions/auth";
+import { StampButton } from "@/components/ui/StampButton";
 
 const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
 
@@ -14,13 +15,15 @@ type UsernameModalProps = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
+    <StampButton
       type="submit"
+      variant="teal"
+      size="lg"
       disabled={pending}
-      className="w-full px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
+      className="w-full"
     >
       {pending ? "Joining..." : "Let's Play!"}
-    </button>
+    </StampButton>
   );
 }
 

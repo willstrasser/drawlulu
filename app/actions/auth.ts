@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { upsertUser } from "@/lib/ensure-user";
 import { getSession } from "@/lib/iron-session";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
@@ -37,10 +38,12 @@ export async function signInAsGuest(
   session.username = trimmed;
   await session.save();
 
+  revalidatePath("/");
   return { ok: true, username: trimmed };
 }
 
 export async function signOut(): Promise<void> {
   const session = await getSession();
   session.destroy();
+  revalidatePath("/");
 }

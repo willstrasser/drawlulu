@@ -18,22 +18,14 @@ export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
       key={prompt.promptId}
       className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl"
     >
-      {/* Progress bar auto-advances after 7s */}
+      {/* Progress bar auto-advances after 7s. Keyframe `drain` is in globals.css. */}
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
           key={prompt.promptId}
           className="h-full bg-riso-teal rounded-full"
-          style={{
-            animation: "drain 7s linear forwards",
-          }}
+          style={{ animation: "drain 7s linear forwards" }}
         />
       </div>
-      <style>{`
-        @keyframes drain {
-          from { width: 100%; }
-          to   { width: 0%; }
-        }
-      `}</style>
 
       <div className="text-center">
         <motion.p

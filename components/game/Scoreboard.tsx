@@ -5,6 +5,7 @@ import type { PlayerScore, PromptBreakdown } from "@/lib/game-types";
 import Image from "next/image";
 import { AnnotatedPrompt } from "./AnnotatedPrompt";
 import { WOBBLE, SETTLE } from "@/components/ui/motion-presets";
+import { StampButton } from "@/components/ui/StampButton";
 
 type ScoreboardProps = {
   isHost: boolean;
@@ -198,18 +199,22 @@ export function Scoreboard({
 
       {isHost ? (
         <div className="flex flex-col sm:flex-row gap-3">
-          <button
+          <StampButton
             onClick={onPlayAgain}
-            className="w-full sm:w-auto px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            variant="teal"
+            size="lg"
+            className="w-full sm:w-auto"
           >
             Next Round
-          </button>
-          <button
+          </StampButton>
+          <StampButton
             onClick={onNewGame}
-            className="w-full sm:w-auto px-8 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            variant="white"
+            size="lg"
+            className="w-full sm:w-auto"
           >
             New Game
-          </button>
+          </StampButton>
         </div>
       ) : (
         <p className="text-gray-600">Waiting for host to start next round...</p>

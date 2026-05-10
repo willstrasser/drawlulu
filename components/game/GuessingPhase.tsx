@@ -9,6 +9,7 @@ import type { GuessEntry } from "@/liveblocks.config";
 import type { PromptEntry } from "@/lib/game-types";
 import Image from "next/image";
 import { BOUNCY } from "@/components/ui/motion-presets";
+import { StampButton } from "@/components/ui/StampButton";
 import { log } from "@/lib/logger";
 
 type GuessingPhaseProps = {
@@ -30,13 +31,9 @@ const INITIAL: GuessState = { ok: false, isCorrect: false, error: null };
 function GuessSubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
-    >
+    <StampButton type="submit" variant="teal" size="md" disabled={pending}>
       {pending ? "..." : "Guess!"}
-    </button>
+    </StampButton>
   );
 }
 

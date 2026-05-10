@@ -5,6 +5,7 @@ import { PlayerList } from "./PlayerList";
 import { motion } from "motion/react";
 import { useTransition } from "react";
 import { log } from "@/lib/logger";
+import { StampButton } from "@/components/ui/StampButton";
 
 type LobbyProps = {
   roomCode: string;
@@ -102,10 +103,11 @@ export function Lobby({
       </div>
 
       {isHost ? (
-        <button
+        <StampButton
           onClick={handleStart}
           disabled={!canStart || starting}
-          className="px-8 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_theme(colors.gray.900)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_theme(colors.gray.900)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
+          variant="teal"
+          size="lg"
         >
           {starting
             ? "Starting..."
@@ -114,7 +116,7 @@ export function Lobby({
               : !selectedCategory
                 ? "Select a category"
                 : "Start Game"}
-        </button>
+        </StampButton>
       ) : (
         <p className="text-gray-600">Waiting for host to start the game...</p>
       )}
