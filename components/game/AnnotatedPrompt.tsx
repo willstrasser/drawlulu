@@ -28,7 +28,7 @@ export function AnnotatedPrompt({
         <span key={i}>
           {part}
           {i < parts.length - 1 && (
-            <span className="not-italic inline-block bg-riso-red/15 text-riso-red font-semibold px-1 rounded border border-riso-red/30 text-[0.9em] mx-0.5 align-baseline">
+            <span className="not-italic inline-block bg-danger/15 text-danger font-semibold px-1 rounded border border-danger/30 text-[0.9em] mx-0.5 align-baseline">
               {forbiddenWords[i] ?? "?"}
             </span>
           )}

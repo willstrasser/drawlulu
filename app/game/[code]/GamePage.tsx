@@ -153,9 +153,9 @@ function GameRoom({
 
   if (!storageLoaded) {
     return (
-      <div className="relative z-10 min-h-screen text-gray-900 flex items-center justify-center">
+      <div className="relative z-10 min-h-screen text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-600">Connecting to room...</p>
         </div>
       </div>
@@ -163,7 +163,7 @@ function GameRoom({
   }
 
   return (
-    <div className="relative z-10 min-h-screen text-gray-900">
+    <div className="relative z-10 min-h-screen text-foreground">
       {showDevPanel && (
         <DevPanel
           code={code}
@@ -172,13 +172,13 @@ function GameRoom({
           onSetPhase={(phase: GamePhase) => setGamePhase(phase)}
         />
       )}
-      <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-between">
+      <nav className="border-b border-border/10 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/"
             className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
           >
-            Draw<span className="text-riso-teal">lulu</span>
+            Draw<span className="text-primary">lulu</span>
           </Link>
           {roundNumber != null && roundNumber > 1 && (
             <span className="text-sm text-gray-500">Round {roundNumber}</span>
@@ -241,8 +241,8 @@ function GamePageInner({
 
   if (loading) {
     return (
-      <div className="relative z-10 min-h-screen text-gray-900 flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full" />
+      <div className="relative z-10 min-h-screen text-foreground flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }

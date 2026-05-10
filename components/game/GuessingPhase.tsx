@@ -10,6 +10,10 @@ import type { PromptEntry } from "@/lib/game-types";
 import Image from "next/image";
 import { BOUNCY } from "@/components/ui/motion-presets";
 import { StampButton } from "@/components/ui/StampButton";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Chip } from "@/components/ui/Chip";
+import { PhaseShell } from "@/components/ui/PhaseShell";
 import { log } from "@/lib/logger";
 
 type GuessingPhaseProps = {
@@ -31,7 +35,7 @@ const INITIAL: GuessState = { ok: false, isCorrect: false, error: null };
 function GuessSubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <StampButton type="submit" variant="teal" size="md" disabled={pending}>
+    <StampButton type="submit" variant="primary" size="md" disabled={pending}>
       {pending ? "..." : "Guess!"}
     </StampButton>
   );
@@ -50,7 +54,7 @@ export function GuessingPhase({
   if (!prompts || prompts.length === 0) {
     return (
       <div className="text-center">
-        <div className="animate-spin h-8 w-8 border-4 border-riso-teal border-t-transparent rounded-full mx-auto mb-4" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
         <p className="text-gray-600">Loading images...</p>
       </div>
     );
@@ -152,18 +156,18 @@ function GuessForm({
   const hasGuessedCorrectly = state.ok && state.isCorrect;
 
   return (
-    <div className="relative flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
+    <PhaseShell width="lg" className="relative">
       <Timer />
 
       <div className="text-center">
         {category && (
-          <span className="text-xs font-medium uppercase tracking-wide text-riso-teal bg-riso-teal/10 px-3 py-1 rounded-full border border-riso-teal/30">
+          <Chip tint="primary" size="sm">
             {category}
-          </span>
+          </Chip>
         )}
         <p className="text-gray-600 text-sm mt-2">
           Image {currentPromptIndex + 1} of {promptsLength} — by{" "}
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-foreground">
             {currentPrompt.username}
           </span>
         </p>
@@ -178,7 +182,7 @@ function GuessForm({
           transition={{ type: "spring", stiffness: 300, damping: 28 }}
         >
           {currentPrompt.imageUrl ? (
-            <div className="rounded-xl overflow-hidden border-2 border-gray-900/10 shadow-[4px_4px_0_--theme(--color-gray-900/0.1)]">
+            <div className="rounded-xl overflow-hidden border-2 border-border/10 shadow-[4px_4px_0_--theme(--color-border/0.1)]">
               <Image
                 src={currentPrompt.imageUrl}
                 alt="AI generated image"
@@ -188,47 +192,48 @@ function GuessForm({
               />
             </div>
           ) : (
-            <div className="w-full h-64 bg-white/60 rounded-xl border-2 border-gray-900/10 flex items-center justify-center text-gray-500">
+            <Card padding="none" className="w-full h-64 flex items-center justify-center text-gray-500">
               No image generated
-            </div>
+            </Card>
           )}
         </motion.div>
       </AnimatePresence>
 
       {isMyPrompt ? (
-        <div className="bg-riso-purple/10 border-2 border-riso-purple/30 rounded-lg p-4 text-center">
-          <p className="text-riso-purple">
+        <Card tint="accent" radius="lg" className="text-center">
+          <p className="text-accent">
             This is your image! The target was:{" "}
             <span className="font-bold">{currentPrompt.targetWord}</span>
           </p>
-          <p className="text-riso-purple/70 text-sm mt-1">
+          <p className="text-accent/70 text-sm mt-1">
             Watch others try to guess...
           </p>
-        </div>
+        </Card>
       ) : hasGuessedCorrectly ? (
         <motion.div
-          className="bg-riso-teal/10 border-2 border-riso-teal/30 rounded-lg p-4 text-center"
           initial={{ opacity: 0, scale: 0.8, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={BOUNCY}
         >
-          <p className="text-riso-teal font-bold">You guessed correctly!</p>
+          <Card tint="primary" radius="lg" className="text-center">
+            <p className="text-primary font-bold">You guessed correctly!</p>
+          </Card>
         </motion.div>
       ) : (
         <form action={formAction} className="flex gap-2 w-full">
-          <input
+          <Input
             type="text"
             name="guessText"
             placeholder="Type your guess..."
             required
             maxLength={200}
-            className="flex-1 bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50"
+            className="flex-1"
           />
           <GuessSubmitButton />
         </form>
       )}
 
-      {state.error && <p className="text-riso-red text-sm">{state.error}</p>}
+      {state.error && <p className="text-danger text-sm">{state.error}</p>}
 
       {/* Live guess feed */}
       {currentGuesses && currentGuesses.length > 0 && (
@@ -245,8 +250,8 @@ function GuessForm({
                   transition={{ type: "spring", stiffness: 450, damping: 30 }}
                   className={`px-3 py-1.5 rounded text-sm ${
                     g.isCorrect
-                      ? "bg-riso-teal/10 border-2 border-riso-teal/30 text-riso-teal"
-                      : "bg-white/60 text-gray-600"
+                      ? "bg-primary/10 border-2 border-primary/30 text-primary"
+                      : "bg-surface/60 text-gray-600"
                   }`}
                 >
                   <span className="font-medium">{g.username}:</span>{" "}
@@ -280,6 +285,6 @@ function GuessForm({
           ) : null,
         )}
       </div>
-    </div>
+    </PhaseShell>
   );
 }

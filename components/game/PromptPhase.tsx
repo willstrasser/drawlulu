@@ -6,6 +6,10 @@ import { motion } from "motion/react";
 import { Timer } from "./Timer";
 import { WOBBLE, BOUNCY } from "@/components/ui/motion-presets";
 import { StampButton } from "@/components/ui/StampButton";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+import { Textarea } from "@/components/ui/Textarea";
+import { PhaseShell, phaseShell } from "@/components/ui/PhaseShell";
 import { log } from "@/lib/logger";
 
 type PromptPhaseProps = {
@@ -29,7 +33,7 @@ const INITIAL: SubmitState = { ok: false, forbiddenWordsUsed: [], error: null };
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <StampButton type="submit" variant="teal" size="lg" disabled={pending}>
+    <StampButton type="submit" variant="primary" size="lg" disabled={pending}>
       {pending ? "Submitting..." : "Submit Prompt"}
     </StampButton>
   );
@@ -84,7 +88,7 @@ export function PromptPhase({
 
   if (hasSubmitted) {
     return (
-      <div className="flex flex-col items-center gap-4 sm:gap-6">
+      <PhaseShell width="full">
         <Timer />
         <motion.div
           className="text-center"
@@ -92,40 +96,37 @@ export function PromptPhase({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={BOUNCY}
         >
-          <h2 className="text-2xl font-bold mb-2 text-gray-900">
+          <h2 className="text-2xl font-bold mb-2 text-foreground">
             Prompt Submitted!
           </h2>
           {state.forbiddenWordsUsed.length > 0 && (
-            <div className="bg-riso-red/10 border-2 border-riso-red/50 rounded-lg p-3 mt-2">
-              <p className="text-riso-red text-sm">
+            <Card tint="danger" padding="sm" radius="lg" className="mt-2">
+              <p className="text-danger text-sm">
                 Taboo words detected: {state.forbiddenWordsUsed.join(", ")}{" "}
                 (-25pts each)
               </p>
-            </div>
+            </Card>
           )}
           <p className="text-gray-600 mt-4">Waiting for other players...</p>
         </motion.div>
-      </div>
+      </PhaseShell>
     );
   }
 
   return (
-    <form
-      action={formAction}
-      className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-lg"
-    >
+    <form action={formAction} className={phaseShell({ width: "md" })}>
       <Timer />
 
       {category && (
-        <span className="text-xs font-medium uppercase tracking-wide text-riso-teal bg-riso-teal/10 px-3 py-1 rounded-full border border-riso-teal/30">
+        <Chip tint="primary" size="sm">
           {category}
-        </span>
+        </Chip>
       )}
 
       <div className="text-center">
         <p className="text-gray-600 text-sm mb-1">Your target word is:</p>
         <motion.h2
-          className="text-3xl font-bold text-riso-teal"
+          className="text-3xl font-bold text-primary"
           initial={{ opacity: 0, scale: 0.7, rotate: -3 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ ...WOBBLE, delay: 0.1 }}
@@ -135,19 +136,20 @@ export function PromptPhase({
       </div>
 
       <div className="w-full">
-        <h3 className="text-sm font-medium text-riso-red mb-2 uppercase tracking-wide">
+        <h3 className="text-sm font-medium text-danger mb-2 uppercase tracking-wide">
           Taboo Words (don&apos;t use these!)
         </h3>
         <div className="flex flex-wrap gap-2">
           {tabooWords.map((word, i) => (
             <motion.span
               key={word}
-              className="bg-riso-red/10 border-2 border-riso-red/30 text-riso-red px-3 py-1 rounded-full text-sm font-medium"
               initial={{ opacity: 0, scale: 0.6, rotate: i % 2 === 0 ? -3 : 3 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ ...BOUNCY, delay: 0.15 + i * 0.06 }}
             >
-              {word}
+              <Chip tint="danger" size="md" className="border-2">
+                {word}
+              </Chip>
             </motion.span>
           ))}
         </div>
@@ -157,17 +159,17 @@ export function PromptPhase({
         <label className="block text-sm text-gray-600 mb-2">
           Write a prompt to generate an image of your target:
         </label>
-        <textarea
+        <Textarea
           name="promptText"
           placeholder="Describe an image that hints at your target word..."
           required
           maxLength={1000}
-          className="w-full bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 resize-none"
+          className="w-full"
           rows={3}
         />
       </div>
 
-      {state.error && <p className="text-riso-red text-sm">{state.error}</p>}
+      {state.error && <p className="text-danger text-sm">{state.error}</p>}
 
       <SubmitButton />
     </form>

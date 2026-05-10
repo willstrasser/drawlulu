@@ -20,7 +20,7 @@ export function PlayerList() {
           {self && (
             <motion.li
               key="self"
-              className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2"
+              className="flex items-center gap-2 rounded-lg bg-surface/60 backdrop-blur-sm border-2 border-border/10 px-3 py-2"
               initial={{ opacity: 0, scale: 0.9, x: -12 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 12 }}
@@ -39,7 +39,7 @@ export function PlayerList() {
                 {self.presence.username} (you)
               </span>
               {self.presence.isReady && (
-                <span className="ml-auto text-riso-teal text-xs font-bold">
+                <span className="ml-auto text-primary text-xs font-bold">
                   Ready
                 </span>
               )}
@@ -48,7 +48,7 @@ export function PlayerList() {
           {others.map((other) => (
             <motion.li
               key={other.connectionId}
-              className="flex items-center gap-2 rounded-lg bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-3 py-2"
+              className="flex items-center gap-2 rounded-lg bg-surface/60 backdrop-blur-sm border-2 border-border/10 px-3 py-2"
               initial={{ opacity: 0, scale: 0.9, x: -12 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 12 }}
@@ -65,7 +65,7 @@ export function PlayerList() {
               )}
               <span>{other.presence.username}</span>
               {other.presence.isReady && (
-                <span className="ml-auto text-riso-teal text-xs font-bold">
+                <span className="ml-auto text-primary text-xs font-bold">
                   Ready
                 </span>
               )}

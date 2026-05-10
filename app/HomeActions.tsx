@@ -9,6 +9,7 @@ import {
   initialGuestSignupState,
 } from "@/app/actions/state";
 import { StampButton } from "@/components/ui/StampButton";
+import { Input } from "@/components/ui/Input";
 import type { SessionData } from "@/lib/session";
 
 type HomeActionsProps = {
@@ -24,7 +25,7 @@ function CreateButton() {
   return (
     <StampButton
       type="submit"
-      variant="teal"
+      variant="primary"
       size="lg"
       disabled={pending}
       className="w-full"
@@ -39,7 +40,7 @@ function JoinButton() {
   return (
     <StampButton
       type="submit"
-      variant="purple"
+      variant="accent"
       size="md"
       disabled={pending}
       className="px-6 py-3"
@@ -54,7 +55,7 @@ function GuestSubmitButton() {
   return (
     <StampButton
       type="submit"
-      variant="teal"
+      variant="primary"
       size="lg"
       disabled={pending}
       className="w-full"
@@ -69,7 +70,7 @@ function SignOutButton() {
     <form action={signOut}>
       <button
         type="submit"
-        className="px-3 py-1.5 text-sm border border-gray-900/10 rounded-lg hover:bg-gray-900/5 transition-colors"
+        className="px-3 py-1.5 text-sm border border-border/10 rounded-lg hover:bg-foreground/5 transition-colors"
       >
         Sign out
       </button>
@@ -91,7 +92,7 @@ function SignedIn({ user }: { user: SessionData }) {
 
   return (
     <>
-      <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-end gap-3">
+      <nav className="border-b border-border/10 px-6 py-3 flex items-center justify-end gap-3">
         <span className="text-sm text-gray-600">{user.username}</span>
         <SignOutButton />
       </nav>
@@ -106,19 +107,19 @@ function SignedIn({ user }: { user: SessionData }) {
           <Divider />
 
           <form action={joinFormAction} className="flex gap-2 w-full">
-            <input
+            <Input
               type="text"
               name="code"
               placeholder="Enter room code"
               maxLength={6}
               required
-              className="flex-1 bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 font-mono text-center tracking-widest uppercase"
+              className="flex-1 font-mono text-center tracking-widest uppercase"
             />
             <JoinButton />
           </form>
 
           {error && (
-            <p className="text-riso-red text-sm text-center">{error}</p>
+            <p className="text-danger text-sm text-center">{error}</p>
           )}
         </div>
       </main>
@@ -134,10 +135,10 @@ function SignedOut() {
 
   return (
     <>
-      <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-end gap-3">
+      <nav className="border-b border-border/10 px-6 py-3 flex items-center justify-end gap-3">
         <a
           href="/api/auth/google"
-          className="px-4 py-2 bg-white/60 hover:bg-white/80 border-2 border-gray-900/10 rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-surface/60 hover:bg-surface/80 border-2 border-border/10 rounded-lg text-sm font-medium transition-colors"
         >
           Sign in with Google
         </a>
@@ -149,17 +150,17 @@ function SignedOut() {
           action={formAction}
           className="flex flex-col items-center gap-4 w-full max-w-sm"
         >
-          <input
+          <Input
             type="text"
             name="username"
             placeholder="Pick a name to play"
             maxLength={32}
             required
             autoFocus
-            className="w-full bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 text-center text-lg font-medium"
+            className="w-full text-center text-lg font-medium"
           />
           {state.error && (
-            <p className="text-riso-red text-sm">{state.error}</p>
+            <p className="text-danger text-sm">{state.error}</p>
           )}
           <GuestSubmitButton />
           <p className="text-xs text-gray-400 text-center">
@@ -175,7 +176,7 @@ function Hero() {
   return (
     <div className="text-center">
       <h2 className="text-5xl sm:text-9xl font-bold mb-4">
-        Draw<span className="text-riso-teal">lulu</span>
+        Draw<span className="text-primary">lulu</span>
       </h2>
       <p className="text-gray-600 text-lg max-w-md">
         Write clever prompts, generate AI images, and guess what your friends
@@ -188,9 +189,9 @@ function Hero() {
 function Divider() {
   return (
     <div className="flex items-center gap-3 w-full">
-      <div className="flex-1 h-px bg-gray-900/10" />
+      <div className="flex-1 h-px bg-border/10" />
       <span className="text-gray-500 text-sm">or</span>
-      <div className="flex-1 h-px bg-gray-900/10" />
+      <div className="flex-1 h-px bg-border/10" />
     </div>
   );
 }

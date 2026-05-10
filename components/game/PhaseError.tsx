@@ -12,7 +12,7 @@ export function PhaseError({ error, onReload }: PhaseErrorProps) {
       <p className="text-gray-700 mb-4">{error}</p>
       <button
         onClick={handleReload}
-        className="px-4 py-2 bg-riso-teal text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+        className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
       >
         Reload
       </button>

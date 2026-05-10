@@ -1,6 +1,6 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 
-type Variant = "teal" | "purple" | "white";
+type Variant = "primary" | "accent" | "neutral";
 type Size = "sm" | "md" | "lg";
 
 type StampButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -9,9 +9,9 @@ type StampButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  teal: "bg-riso-teal text-white",
-  purple: "bg-riso-purple text-white",
-  white: "bg-white text-gray-900",
+  primary: "bg-primary text-white",
+  accent: "bg-accent text-white",
+  neutral: "bg-surface text-foreground",
 };
 
 const SIZE_CLASSES: Record<Size, string> = {
@@ -21,8 +21,8 @@ const SIZE_CLASSES: Record<Size, string> = {
 };
 
 const BASE_CLASSES =
-  "border-2 border-gray-900 font-bold shadow-[4px_4px_0_var(--color-gray-900)] " +
-  "hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] " +
+  "border-2 border-border font-bold shadow-[4px_4px_0_var(--color-border)] " +
+  "hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-border)] " +
   "active:translate-x-1 active:translate-y-1 active:shadow-none " +
   "disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none " +
   "disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed " +
@@ -35,7 +35,7 @@ const BASE_CLASSES =
  */
 export const StampButton = forwardRef<HTMLButtonElement, StampButtonProps>(
   function StampButton(
-    { variant = "teal", size = "md", className = "", children, ...rest },
+    { variant = "primary", size = "md", className = "", children, ...rest },
     ref,
   ) {
     return (

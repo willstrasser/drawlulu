@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { useTransition } from "react";
 import { log } from "@/lib/logger";
 import { StampButton } from "@/components/ui/StampButton";
+import { PhaseShell } from "@/components/ui/PhaseShell";
 
 type LobbyProps = {
   roomCode: string;
@@ -46,12 +47,12 @@ export function Lobby({
   const canStart = isHost && playerCount >= 2 && selectedCategory !== "";
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:gap-8">
+    <PhaseShell width="full" density="comfortable">
       <div className="text-center">
-        <h1 className="text-3xl font-bold mb-2 text-gray-900">Game Lobby</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">Game Lobby</h1>
         <div className="flex items-center justify-center gap-2">
           <span className="text-gray-600">Room Code:</span>
-          <span className="text-2xl font-mono font-bold tracking-widest bg-white/60 backdrop-blur-sm border-2 border-gray-900/10 px-4 py-2 rounded-lg">
+          <span className="text-2xl font-mono font-bold tracking-widest bg-surface/60 backdrop-blur-sm border-2 border-border/10 px-4 py-2 rounded-lg">
             {roomCode}
           </span>
         </div>
@@ -76,10 +77,10 @@ export function Lobby({
               disabled={!isHost}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border-2 ${
                 selectedCategory === cat
-                  ? "bg-riso-teal text-white border-gray-900"
+                  ? "bg-primary text-white border-border"
                   : isHost
-                    ? "bg-riso-purple/10 border-riso-purple text-riso-purple hover:bg-riso-purple/20"
-                    : "bg-white/60 border-gray-900/10 text-gray-500 cursor-default"
+                    ? "bg-accent/10 border-accent text-accent hover:bg-accent/20"
+                    : "bg-surface/60 border-border/10 text-gray-500 cursor-default"
               }`}
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -106,7 +107,7 @@ export function Lobby({
         <StampButton
           onClick={handleStart}
           disabled={!canStart || starting}
-          variant="teal"
+          variant="primary"
           size="lg"
         >
           {starting
@@ -120,6 +121,6 @@ export function Lobby({
       ) : (
         <p className="text-gray-600">Waiting for host to start the game...</p>
       )}
-    </div>
+    </PhaseShell>
   );
 }

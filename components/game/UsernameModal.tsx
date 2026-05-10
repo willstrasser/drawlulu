@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { signInAsGuest } from "@/app/actions/auth";
 import { initialGuestSignupState } from "@/app/actions/state";
 import { StampButton } from "@/components/ui/StampButton";
+import { Input } from "@/components/ui/Input";
 
 const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
 
@@ -18,7 +19,7 @@ function SubmitButton() {
   return (
     <StampButton
       type="submit"
-      variant="teal"
+      variant="primary"
       size="lg"
       disabled={pending}
       className="w-full"
@@ -47,30 +48,30 @@ export function UsernameModal({ onComplete }: UsernameModalProps) {
       transition={{ duration: 0.2 }}
     >
       <motion.div
-        className="relative bg-white/90 border-2 border-gray-900/10 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
+        className="relative bg-surface/90 border-2 border-border/10 rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
         initial={{ opacity: 0, scale: 0.88, y: 20, rotate: -1.5 }}
         animate={{ opacity: 1, scale: 1, y: 0, rotate: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 10 }}
         transition={WOBBLE}
       >
-        <h2 className="text-2xl font-bold mb-2 text-gray-900 text-center">
+        <h2 className="text-2xl font-bold mb-2 text-foreground text-center">
           What should we call you?
         </h2>
         <p className="text-gray-500 text-sm text-center mb-6">
           Pick a name to show other players.
         </p>
         <form action={formAction} className="flex flex-col gap-4">
-          <input
+          <Input
             type="text"
             name="username"
             placeholder="Your name"
             maxLength={32}
             required
             autoFocus
-            className="bg-white/80 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 text-center text-lg font-medium"
+            className="text-center text-lg font-medium"
           />
           {state.error && (
-            <p className="text-riso-red text-sm text-center">{state.error}</p>
+            <p className="text-danger text-sm text-center">{state.error}</p>
           )}
           <SubmitButton />
         </form>
@@ -78,7 +79,7 @@ export function UsernameModal({ onComplete }: UsernameModalProps) {
           Or{" "}
           <a
             href="/api/auth/google"
-            className="text-riso-teal underline underline-offset-2 hover:opacity-80"
+            className="text-primary underline underline-offset-2 hover:opacity-80"
           >
             sign in with Google
           </a>{" "}

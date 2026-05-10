@@ -1,11 +1,25 @@
 @import "tailwindcss";
 
 @theme inline {
+  /* Palette — riso material identity. Avoid using these directly in
+     components; reference the semantic tokens below so palette swaps are
+     a one-file change. */
   --color-riso-red: #ff5e5b;
   --color-riso-teal: #00cecb;
   --color-riso-yellow: #ffed66;
   --color-riso-purple: #9b5de5;
   --color-riso-cream: #f7f5e6;
+
+  /* Semantic — what each color MEANS. Components reference these. */
+  --color-primary: var(--color-riso-teal);
+  --color-accent: var(--color-riso-purple);
+  --color-danger: var(--color-riso-red);
+  --color-highlight: var(--color-riso-yellow);
+  --color-background: var(--color-riso-cream);
+  --color-surface: #ffffff;
+  --color-foreground: #171717;
+  --color-border: #171717;
+
   --font-sans: var(--font-space-grotesk);
 }
 
