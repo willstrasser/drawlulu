@@ -2,16 +2,12 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { createGameAction, joinGameAction } from "@/app/actions/games";
+import { signInAsGuest, signOut } from "@/app/actions/auth";
 import {
-  createGameAction,
-  joinGameAction,
   initialActionState,
-} from "@/app/actions/games";
-import {
-  signInAsGuest,
-  signOut,
   initialGuestSignupState,
-} from "@/app/actions/auth";
+} from "@/app/actions/state";
 import { StampButton } from "@/components/ui/StampButton";
 import type { SessionData } from "@/lib/session";
 

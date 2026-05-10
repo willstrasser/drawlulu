@@ -3,7 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { motion } from "motion/react";
-import { signInAsGuest, initialGuestSignupState } from "@/app/actions/auth";
+import { signInAsGuest } from "@/app/actions/auth";
+import { initialGuestSignupState } from "@/app/actions/state";
 import { StampButton } from "@/components/ui/StampButton";
 
 const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;

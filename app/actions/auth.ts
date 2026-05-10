@@ -7,14 +7,7 @@ import { upsertUser } from "@/lib/ensure-user";
 import { getSession } from "@/lib/iron-session";
 import { checkRateLimit, getClientIpFromHeaders } from "@/lib/rate-limit";
 
-export type GuestSignupState = {
-  ok: boolean;
-  error?: string;
-  username?: string;
-};
-
-const INITIAL: GuestSignupState = { ok: false };
-export const initialGuestSignupState = INITIAL;
+import type { GuestSignupState } from "./state";
 
 export async function signInAsGuest(
   _prev: GuestSignupState,

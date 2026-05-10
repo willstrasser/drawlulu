@@ -9,8 +9,7 @@ import { getUser } from "@/lib/get-user";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createLobbyGame } from "@/lib/db/games";
 
-export type ActionState = { error: string | null };
-export const initialActionState: ActionState = { error: null };
+import type { ActionState } from "./state";
 
 export async function createGameAction(): Promise<ActionState> {
   const user = await getUser();
