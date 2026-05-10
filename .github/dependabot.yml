@@ -10,6 +10,15 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+    # ESLint 10 (released 2026) drops APIs that eslint-plugin-react still
+    # depends on transitively via eslint-config-next. Until Next.js ships an
+    # eslint-config-next compatible with ESLint 10, block major bumps so the
+    # tooling group isn't permanently red. Revisit when eslint-config-next
+    # publishes a release noting ESLint 10 support.
+    ignore:
+      - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
     groups:
       # Group framework majors+minors together — they share migration paths
       # (Next codemod, React types codemod) and shouldn't land separately.
@@ -30,13 +39,18 @@ updates:
         patterns:
           - drizzle-orm
           - drizzle-kit
-      # Test/lint/format toolchain — safe to roll up.
+      # ESLint + plugins bump on a different cadence (and break with majors
+      # until the Next.js plugin ecosystem catches up). Keep them in their
+      # own group so a stuck eslint update doesn't block the rest.
+      eslint:
+        patterns:
+          - eslint
+          - eslint-config-prettier
+      # Test/format/types toolchain — safe to roll up.
       tooling:
         patterns:
           - vitest
           - "@vitest/*"
-          - eslint
-          - eslint-config-prettier
           - prettier
           - "@playwright/test"
           - typescript
