@@ -25,7 +25,9 @@ export function GeneratingPhase({ isHost, onSkip }: GeneratingPhaseProps) {
         animate={{ rotate: 360 }}
         transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
       />
-      <h2 className="text-2xl font-bold text-foreground">Generating Images...</h2>
+      <h2 className="text-2xl font-bold text-foreground">
+        Generating Images...
+      </h2>
       <p className="text-gray-600">
         AI is creating images from everyone&apos;s prompts. This may take a few
         seconds.

@@ -192,7 +192,10 @@ function GuessForm({
               />
             </div>
           ) : (
-            <Card padding="none" className="w-full h-64 flex items-center justify-center text-gray-500">
+            <Card
+              padding="none"
+              className="w-full h-64 flex items-center justify-center text-gray-500"
+            >
               No image generated
             </Card>
           )}

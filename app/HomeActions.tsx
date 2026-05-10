@@ -118,9 +118,7 @@ function SignedIn({ user }: { user: SessionData }) {
             <JoinButton />
           </form>
 
-          {error && (
-            <p className="text-danger text-sm text-center">{error}</p>
-          )}
+          {error && <p className="text-danger text-sm text-center">{error}</p>}
         </div>
       </main>
     </>
@@ -159,9 +157,7 @@ function SignedOut() {
             autoFocus
             className="w-full text-center text-lg font-medium"
           />
-          {state.error && (
-            <p className="text-danger text-sm">{state.error}</p>
-          )}
+          {state.error && <p className="text-danger text-sm">{state.error}</p>}
           <GuestSubmitButton />
           <p className="text-xs text-gray-400 text-center">
             Or use the Google sign-in above to save your stats.

@@ -8,8 +8,8 @@ For any single Dependabot PR — patch, minor, or grouped:
 
 ```bash
 gh pr checkout <PR-#>
-npm ci
-npm run check        # lint · type-check · format:check · unit tests
+pnpm install --frozen-lockfile
+pnpm check        # lint · type-check · format:check · unit tests
 ```
 
 If `check` is green, that's enough for patch and minor bumps. CI runs the same gate. Merge.
@@ -21,7 +21,7 @@ For grouped majors or anything in `next-react`, `liveblocks`, `drizzle`, or `too
 Next ships a codemod CLI that automates almost every breaking change.
 
 ```bash
-npx @next/codemod@canary upgrade latest
+pnpm dlx @next/codemod@canary upgrade latest
 ```
 
 The codemod:
@@ -32,9 +32,9 @@ The codemod:
 Then run:
 
 ```bash
-npx types-react-codemod@latest preset-19 .   # only on a React major
-npm run format
-npm run check
+pnpm dlx types-react-codemod@latest preset-19 .   # only on a React major
+pnpm format
+pnpm check
 ```
 
 Manual checks:
@@ -48,13 +48,13 @@ Manual checks:
 Liveblocks publishes versioned upgrade guides at https://liveblocks.io/docs/upgrade.
 
 ```bash
-npm install @liveblocks/client@latest @liveblocks/node@latest @liveblocks/react@latest
+pnpm add @liveblocks/client@latest @liveblocks/node@latest @liveblocks/react@latest
 ```
 
 Then run:
 
 ```bash
-npm run check
+pnpm check
 ```
 
 Manual checks:
@@ -65,14 +65,14 @@ Manual checks:
 ## `drizzle` group (drizzle-orm + drizzle-kit)
 
 ```bash
-npm install drizzle-orm@latest drizzle-kit@latest
-npm run check
-npm run db:generate -- --dry-run   # preview any new migrations
+pnpm add drizzle-orm@latest drizzle-kit@latest
+pnpm check
+pnpm db:generate -- --dry-run   # preview any new migrations
 ```
 
 Manual checks:
 - `lib/db/schema.ts` — column helpers (`text`, `uuid`, `jsonb`) sometimes change generic signatures.
-- Test branch: `npm run test:db:setup` should still create the schema cleanly. If it fails, check the migration produced by `db:generate` against the previous shape.
+- Test branch: `pnpm test:db:setup` should still create the schema cleanly. If it fails, check the migration produced by `db:generate` against the previous shape.
 - `app/api/games/[code]/start/route.ts` — the transaction API is most likely to drift; smoke a full round.
 
 ## `tooling` group (vitest, eslint, prettier, playwright, typescript, tsx)
@@ -80,25 +80,25 @@ Manual checks:
 These are usually safe individually. Sequence:
 
 ```bash
-npm install --save-dev <package>@latest
-npm run check
+pnpm add -D <package>@latest
+pnpm check
 ```
 
 If TypeScript bumps and you see new strictness errors in code you didn't touch, that's expected — fix or open an issue. Don't add `// @ts-expect-error` to silence; those rot.
 
-If Prettier bumps and `format:check` fails, run `npm run format` and re-commit.
+If Prettier bumps and `format:check` fails, run `pnpm format` and re-commit.
 
 For `@playwright/test`, also reinstall browsers in CI if the version delta is large:
 
 ```bash
-npx playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 ## What NOT to do
 
 - **Never merge a major Dependabot PR without running `check` locally.** CI catches regressions but won't surface deprecation warnings or API drift in unwatched paths.
 - **Never bump `iron-session` past a major without manually testing OAuth + guest signup + signout.** The cookie-store interface is the most fragile boundary in the app.
-- **Never bypass `npm run format` after a Prettier major.** Re-run, commit the diff as a separate PR.
+- **Never bypass `pnpm format` after a Prettier major.** Re-run, commit the diff as a separate PR.
 - **Don't auto-merge majors.** Patches and minors via Dependabot are safe with green CI; majors deserve a human eyeball on the changelog.
 
 ## When a major is too big for one PR

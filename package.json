@@ -5,6 +5,7 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",
@@ -13,7 +14,7 @@
     "start": "next start",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
     "type-check": "tsc --noEmit",
-    "check": "npm run lint && npm run type-check && npm run format:check && npm test",
+    "check": "pnpm lint && pnpm type-check && pnpm format:check && pnpm test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

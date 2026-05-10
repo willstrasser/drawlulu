@@ -9,8 +9,6 @@ const BASE =
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   function Textarea({ className = "", ...rest }, ref) {
-    return (
-      <textarea ref={ref} className={`${BASE} ${className}`} {...rest} />
-    );
+    return <textarea ref={ref} className={`${BASE} ${className}`} {...rest} />;
   },
 );

@@ -67,7 +67,10 @@ export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...WOBBLE, delay: 0.45 }}
         >
-          <Card padding="none" className="w-full h-64 flex items-center justify-center text-gray-500">
+          <Card
+            padding="none"
+            className="w-full h-64 flex items-center justify-center text-gray-500"
+          >
             No image generated
           </Card>
         </motion.div>
