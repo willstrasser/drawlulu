@@ -1,0 +1,78 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    groups:
+      # Group framework majors+minors together — they share migration paths
+      # (Next codemod, React types codemod) and shouldn't land separately.
+      next-react:
+        patterns:
+          - next
+          - react
+          - react-dom
+          - "@types/react"
+          - "@types/react-dom"
+          - eslint-config-next
+      # Liveblocks ships SDK packages as a unit; keep them in sync.
+      liveblocks:
+        patterns:
+          - "@liveblocks/*"
+      # Drizzle ORM + kit drift in tandem.
+      drizzle:
+        patterns:
+          - drizzle-orm
+          - drizzle-kit
+      # Test/lint/format toolchain — safe to roll up.
+      tooling:
+        patterns:
+          - vitest
+          - "@vitest/*"
+          - eslint
+          - eslint-config-prettier
+          - prettier
+          - "@playwright/test"
+          - typescript
+          - tsx
+      # Catch-all for everything else — patches and minors only, weekly.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - next
+          - react*
+          - "@types/react*"
+          - eslint-config-next
+          - "@liveblocks/*"
+          - drizzle-orm
+          - drizzle-kit
+          - vitest
+          - "@vitest/*"
+          - eslint
+          - eslint-config-prettier
+          - prettier
+          - "@playwright/test"
+          - typescript
+          - tsx
+    commit-message:
+      prefix: "deps"
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: "ci"
