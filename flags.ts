@@ -9,7 +9,7 @@ const identify = dedupe(async () => {
 export const devPanelFlag = flag<boolean>({
   key: "show-dev-panel",
   identify,
-  decide: () => false,
+  decide: () => process.env.NODE_ENV !== "production",
   defaultValue: false,
   description: "Show the DevPanel for specific users",
 });
