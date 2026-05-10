@@ -7,7 +7,7 @@ function requireEnv(name: string): string {
   if (!value) {
     throw new Error(
       `Missing required environment variable: ${name}. ` +
-        `Check your .env file or Vercel project settings.`
+        `Check your .env file or Vercel project settings.`,
     );
   }
   return value;
@@ -17,7 +17,7 @@ const sessionSecret = requireEnv("SESSION_SECRET");
 if (sessionSecret.length < 32) {
   throw new Error(
     `SESSION_SECRET must be at least 32 characters (got ${sessionSecret.length}). ` +
-      `Run: openssl rand -base64 32`
+      `Run: openssl rand -base64 32`,
   );
 }
 

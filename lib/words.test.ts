@@ -6,7 +6,9 @@ describe("getCategories", () => {
     const categories = getCategories();
     expect(Array.isArray(categories)).toBe(true);
     expect(categories.length).toBe(terms.length);
-    expect(categories.every((c) => typeof c === "string" && c.length > 0)).toBe(true);
+    expect(categories.every((c) => typeof c === "string" && c.length > 0)).toBe(
+      true,
+    );
   });
 });
 

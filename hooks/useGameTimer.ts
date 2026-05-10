@@ -67,7 +67,11 @@ export function useGameTimer({
           clearTimeout(timeout);
         }
       } catch (e) {
-        log.error("useGameTimer", "Image generation failed, advancing anyway", e);
+        log.error(
+          "useGameTimer",
+          "Image generation failed, advancing anyway",
+          e,
+        );
       }
       // Always advance — images that failed show "No image generated"
       setCurrentPromptIndex(0);

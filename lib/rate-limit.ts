@@ -14,7 +14,7 @@ const store = new Map<string, { count: number; resetAt: number }>();
 export function checkRateLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
 ): boolean {
   const now = Date.now();
   const entry = store.get(key);
@@ -30,10 +30,11 @@ export function checkRateLimit(
   return true;
 }
 
+export function getClientIpFromHeaders(headers: Headers): string {
+  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return forwarded ?? headers.get("x-real-ip") ?? "unknown";
+}
+
 export function getClientIp(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown"
-  );
+  return getClientIpFromHeaders(request.headers);
 }

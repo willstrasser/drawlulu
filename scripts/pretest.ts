@@ -42,10 +42,9 @@ async function main() {
 
   // ── 2. Kill any process listening on port 3000 ─────────────────────────────
   try {
-    const pid = execSync(
-      "lsof -ti:3000 -sTCP:LISTEN 2>/dev/null | head -1",
-      { shell: true }
-    )
+    const pid = execSync("lsof -ti:3000 -sTCP:LISTEN 2>/dev/null | head -1", {
+      shell: true,
+    })
       .toString()
       .trim();
     if (pid) {
@@ -68,9 +67,12 @@ async function main() {
     console.log(`[pretest] Branch ready (${branchId})`);
   } else {
     const fallback = process.env.TEST_DATABASE_URL;
-    if (!fallback) throw new Error("TEST_DATABASE_URL must be set in .env.test");
+    if (!fallback)
+      throw new Error("TEST_DATABASE_URL must be set in .env.test");
     writeFileSync(BRANCH_URL_FILE, fallback, "utf8");
-    console.log("[pretest] NEON_API_KEY not configured — using TEST_DATABASE_URL");
+    console.log(
+      "[pretest] NEON_API_KEY not configured — using TEST_DATABASE_URL",
+    );
   }
 }
 

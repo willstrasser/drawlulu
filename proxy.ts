@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 // All routes are public — authentication is handled per-route via iron-session.
-export function proxy(_request: NextRequest) {
+export function proxy() {
   return NextResponse.next();
 }
 

@@ -14,7 +14,10 @@ type RevealPhaseProps = {
 
 export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
   return (
-    <div key={prompt.promptId} className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
+    <div
+      key={prompt.promptId}
+      className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl"
+    >
       {/* Progress bar auto-advances after 7s */}
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
@@ -109,8 +112,8 @@ export function RevealPhase({ prompt, correctGuesses }: RevealPhaseProps) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ ...BOUNCY, delay: 0.65 + i * 0.1 }}
               >
-                <span className="font-medium">{g.username}</span> guessed it!{" "}
-                (+{g.pointsAwarded}pts)
+                <span className="font-medium">{g.username}</span> guessed it! (+
+                {g.pointsAwarded}pts)
               </motion.div>
             ))}
           </div>

@@ -20,7 +20,10 @@ describe("generateRoomCode", () => {
 
 describe("validateTabooWords", () => {
   it("returns the original prompt and empty list when no taboos match", () => {
-    const result = validateTabooWords("a friendly llama drawing", ["dragon", "spaceship"]);
+    const result = validateTabooWords("a friendly llama drawing", [
+      "dragon",
+      "spaceship",
+    ]);
     expect(result.sanitizedPrompt).toBe("a friendly llama drawing");
     expect(result.forbiddenWordsUsed).toEqual([]);
   });
@@ -47,10 +50,11 @@ describe("validateTabooWords", () => {
   });
 
   it("collects multiple distinct taboo hits and replaces each", () => {
-    const result = validateTabooWords(
-      "Mafia don in New York",
-      ["Mafia", "Don Corleone", "New York"],
-    );
+    const result = validateTabooWords("Mafia don in New York", [
+      "Mafia",
+      "Don Corleone",
+      "New York",
+    ]);
     expect(result.forbiddenWordsUsed.sort()).toEqual(["Mafia", "New York"]);
     expect(result.sanitizedPrompt).toBe("___ don in ___");
   });

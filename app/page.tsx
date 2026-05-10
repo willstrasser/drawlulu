@@ -12,10 +12,15 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState("");
-  const [pendingAction, setPendingAction] = useState<"create" | "join" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"create" | "join" | null>(
+    null,
+  );
 
   const handleCreate = async () => {
-    if (!user) { setPendingAction("create"); return; }
+    if (!user) {
+      setPendingAction("create");
+      return;
+    }
     setCreating(true);
     setError("");
     try {
@@ -31,7 +36,10 @@ export default function Home() {
 
   const handleJoin = async () => {
     if (!joinCode.trim()) return;
-    if (!user) { setPendingAction("join"); return; }
+    if (!user) {
+      setPendingAction("join");
+      return;
+    }
     setJoining(true);
     setError("");
     try {
@@ -68,9 +76,7 @@ export default function Home() {
 
   return (
     <div className="relative z-10 min-h-screen text-gray-900 flex flex-col">
-      {showModal && (
-        <UsernameModal onComplete={handleModalComplete} />
-      )}
+      {showModal && <UsernameModal onComplete={handleModalComplete} />}
 
       <nav className="border-b border-gray-900/10 px-6 py-3 flex items-center justify-end gap-3">
         {loading ? null : user ? (

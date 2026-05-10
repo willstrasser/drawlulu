@@ -5,28 +5,20 @@ import { useEffect, useState } from "react";
 
 export function Timer() {
   const timerEndsAt = useStorage((root) => root.timerEndsAt);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  // `now` is the only state that the interval mutates; everything else is
+  // derived from props on render. This keeps the effect to "subscribe to a
+  // ticking external clock" and avoids cascading setState within an effect.
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!timerEndsAt) {
-      setSecondsLeft(null);
-      return;
-    }
-    const update = () => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((timerEndsAt - Date.now()) / 1000),
-      );
-      setSecondsLeft(remaining);
-    };
-
-    update();
-    const interval = setInterval(update, 1000);
+    if (!timerEndsAt) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, [timerEndsAt]);
 
-  if (!timerEndsAt || secondsLeft === null) return null;
+  if (!timerEndsAt) return null;
 
+  const secondsLeft = Math.max(0, Math.ceil((timerEndsAt - now) / 1000));
   const isUrgent = secondsLeft <= 10;
 
   return (

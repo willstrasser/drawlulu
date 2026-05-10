@@ -43,13 +43,19 @@ export const rounds = pgTable(
       .references(() => games.id),
     roundNumber: integer("round_number").notNull(),
     status: text("status", {
-      enum: ["prompting", "generating", "guessing", "scoreboard", "completed"] as const,
+      enum: [
+        "prompting",
+        "generating",
+        "guessing",
+        "scoreboard",
+        "completed",
+      ] as const,
     })
       .notNull()
       .default("prompting"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [index("rounds_game_id_idx").on(table.gameId)]
+  (table) => [index("rounds_game_id_idx").on(table.gameId)],
 );
 
 export const prompts = pgTable(
@@ -73,7 +79,7 @@ export const prompts = pgTable(
   (table) => [
     index("prompts_round_id_idx").on(table.roundId),
     index("prompts_user_id_idx").on(table.userId),
-  ]
+  ],
 );
 
 export const wordCards = pgTable(
@@ -88,15 +94,20 @@ export const wordCards = pgTable(
     // relevancyScore: 1–10. 10 = most obvious hint; 1 = obscure/tangential.
     // Stored for future difficulty modulation — not yet used in gameplay.
     authorId: uuid("author_id").references(() => users.id),
-    source: text("source", { enum: ["system", "ai_generated", "user"] as const })
+    source: text("source", {
+      enum: ["system", "ai_generated", "user"] as const,
+    })
       .notNull()
       .default("system"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    index("word_cards_is_active_category_idx").on(table.isActive, table.category),
-  ]
+    index("word_cards_is_active_category_idx").on(
+      table.isActive,
+      table.category,
+    ),
+  ],
 );
 
 export const guesses = pgTable(
@@ -117,5 +128,5 @@ export const guesses = pgTable(
   (table) => [
     index("guesses_prompt_id_idx").on(table.promptId),
     index("guesses_user_id_idx").on(table.userId),
-  ]
+  ],
 );

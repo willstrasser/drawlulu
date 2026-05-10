@@ -25,7 +25,10 @@ import { fileURLToPath } from "url";
 import { neon } from "@neondatabase/serverless";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../.env.test"), override: true });
+dotenv.config({
+  path: path.resolve(__dirname, "../.env.test"),
+  override: true,
+});
 
 const NEON_API_BASE = "https://console.neon.tech/api/v2";
 
@@ -38,7 +41,7 @@ async function main() {
   }
   if (!projectId || projectId === "REPLACE_ME") {
     throw new Error(
-      "Set NEON_PROJECT_ID in .env.test before running this script"
+      "Set NEON_PROJECT_ID in .env.test before running this script",
     );
   }
 
@@ -53,15 +56,21 @@ async function main() {
   let resolvedProjectId = projectId;
   if (!/^[a-z]+-[a-z]+-[a-z0-9]{8}$/.test(projectId)) {
     console.log(`Resolving project name "${projectId}"…`);
-    const listRes = await fetch(`${NEON_API_BASE}/projects?limit=100`, { headers });
-    const listData = await listRes.json() as { projects: { id: string; name: string }[] };
+    const listRes = await fetch(`${NEON_API_BASE}/projects?limit=100`, {
+      headers,
+    });
+    const listData = (await listRes.json()) as {
+      projects: { id: string; name: string }[];
+    };
     const match = listData.projects?.find(
-      (p) => p.name === projectId || p.id === projectId
+      (p) => p.name === projectId || p.id === projectId,
     );
     if (!match) {
-      const names = listData.projects?.map((p) => `"${p.name}" (${p.id})`).join(", ");
+      const names = listData.projects
+        ?.map((p) => `"${p.name}" (${p.id})`)
+        .join(", ");
       throw new Error(
-        `Project "${projectId}" not found. Available: ${names || "(none)"}`
+        `Project "${projectId}" not found. Available: ${names || "(none)"}`,
       );
     }
     resolvedProjectId = match.id;
@@ -80,16 +89,16 @@ async function main() {
         endpoints: [{ type: "read_write" }],
         branch: { name: "test-seed" },
       }),
-    }
+    },
   );
 
   if (!createRes.ok) {
     throw new Error(
-      `Failed to create branch (${createRes.status}): ${await createRes.text()}`
+      `Failed to create branch (${createRes.status}): ${await createRes.text()}`,
     );
   }
 
-  const data = await createRes.json() as {
+  const data = (await createRes.json()) as {
     branch: { id: string; name: string };
     operations: { id: string; status: string }[];
     connection_uris: { connection_uri: string }[];
@@ -98,7 +107,9 @@ async function main() {
   const branchId = data.branch.id;
   const uri = data.connection_uris?.[0]?.connection_uri;
   if (!uri) throw new Error("No connection URI in branch creation response");
-  const connectionUri = uri.includes("sslmode") ? uri : `${uri}?sslmode=require`;
+  const connectionUri = uri.includes("sslmode")
+    ? uri
+    : `${uri}?sslmode=require`;
 
   // Wait for provisioning
   console.log("Waiting for branch to be ready…");
@@ -108,9 +119,9 @@ async function main() {
       await new Promise((r) => setTimeout(r, 500));
       const opRes = await fetch(
         `${NEON_API_BASE}/projects/${resolvedProjectId}/operations/${op.id}`,
-        { headers }
+        { headers },
       );
-      const opData = await opRes.json() as { operation: { status: string } };
+      const opData = (await opRes.json()) as { operation: { status: string } };
       status = opData.operation.status;
       if (status === "failed") throw new Error(`Operation ${op.id} failed`);
     }
@@ -146,7 +157,7 @@ async function main() {
   console.log("\n✅ test-seed branch created successfully!");
   console.log(`   Branch ID: ${branchId}`);
   console.log(
-    "\n👉 Add this to .env.test:\n   NEON_PARENT_BRANCH_ID=" + branchId
+    "\n👉 Add this to .env.test:\n   NEON_PARENT_BRANCH_ID=" + branchId,
   );
 }
 

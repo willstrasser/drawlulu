@@ -37,6 +37,8 @@ export const POST = withGameContext(
       .where(eq(prompts.id, promptId))
       .returning();
 
+    if (!updated) return errorResponse("Prompt update failed", 500);
+
     return jsonResponse({
       sanitizedPrompt: updated.sanitizedPrompt,
       forbiddenWordsUsed: updated.forbiddenWordsUsed,

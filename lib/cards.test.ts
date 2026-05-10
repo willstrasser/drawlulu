@@ -17,7 +17,9 @@ describe("isTabooEntry", () => {
     expect(isTabooEntry({ word: "dragon" })).toBe(false);
     expect(isTabooEntry({ relevancyScore: 9 })).toBe(false);
     expect(isTabooEntry({ word: 1, relevancyScore: 9 })).toBe(false);
-    expect(isTabooEntry({ word: "dragon", relevancyScore: "high" })).toBe(false);
+    expect(isTabooEntry({ word: "dragon", relevancyScore: "high" })).toBe(
+      false,
+    );
   });
 });
 
@@ -51,7 +53,10 @@ describe("isWordCard", () => {
     expect(
       isWordCard({
         ...valid,
-        taboos: [{ word: "Jedi", relevancyScore: 10 }, { word: "missing-score" }],
+        taboos: [
+          { word: "Jedi", relevancyScore: 10 },
+          { word: "missing-score" },
+        ],
       }),
     ).toBe(false);
   });

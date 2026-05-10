@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { motion } from "motion/react";
+import { signInAsGuest, initialGuestSignupState } from "@/app/actions/auth";
 
 const WOBBLE = { type: "spring", stiffness: 300, damping: 18 } as const;
 
@@ -9,30 +11,28 @@ type UsernameModalProps = {
   onComplete: (username: string) => void;
 };
 
-export function UsernameModal({ onComplete }: UsernameModalProps) {
-  const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
+    >
+      {pending ? "Joining..." : "Let's Play!"}
+    </button>
+  );
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim()) return;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/auth/guest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to set username");
-      onComplete(data.username);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      setLoading(false);
-    }
-  };
+export function UsernameModal({ onComplete }: UsernameModalProps) {
+  const [state, formAction] = useActionState(
+    signInAsGuest,
+    initialGuestSignupState,
+  );
+
+  useEffect(() => {
+    if (state.ok && state.username) onComplete(state.username);
+  }, [state, onComplete]);
 
   return (
     <motion.div
@@ -55,26 +55,20 @@ export function UsernameModal({ onComplete }: UsernameModalProps) {
         <p className="text-gray-500 text-sm text-center mb-6">
           Pick a name to show other players.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form action={formAction} className="flex flex-col gap-4">
           <input
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            name="username"
             placeholder="Your name"
             maxLength={32}
+            required
             autoFocus
             className="bg-white/80 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50 text-center text-lg font-medium"
           />
-          {error && (
-            <p className="text-riso-red text-sm text-center">{error}</p>
+          {state.error && (
+            <p className="text-riso-red text-sm text-center">{state.error}</p>
           )}
-          <button
-            type="submit"
-            disabled={!username.trim() || loading}
-            className="w-full px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-xl font-bold text-lg shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
-          >
-            {loading ? "Joining..." : "Let's Play!"}
-          </button>
+          <SubmitButton />
         </form>
         <p className="text-xs text-gray-400 text-center mt-4">
           Or{" "}

@@ -3,7 +3,7 @@
 import { useOthers, useSelf } from "@/liveblocks.config";
 import { PlayerList } from "./PlayerList";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useTransition } from "react";
 import { log } from "@/lib/logger";
 
 type LobbyProps = {
@@ -15,24 +15,30 @@ type LobbyProps = {
   onSelectCategory: (cat: string) => void;
 };
 
-export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory, onSelectCategory }: LobbyProps) {
+export function Lobby({
+  roomCode,
+  isHost,
+  onStart,
+  categories,
+  selectedCategory,
+  onSelectCategory,
+}: LobbyProps) {
   const others = useOthers();
   const self = useSelf();
-  const [starting, setStarting] = useState(false);
+  const [starting, startStarting] = useTransition();
 
-  const handleStart = async () => {
+  const handleStart = () => {
     if (!self) return;
-    setStarting(true);
-    try {
-      const playerUserIds = [
-        self.id,
-        ...others.map((o) => o.id),
-      ].filter(Boolean) as string[];
-      await onStart(playerUserIds);
-    } catch (e) {
-      log.error("Lobby", "Failed to start", e);
-      setStarting(false);
-    }
+    const playerUserIds = [self.id, ...others.map((o) => o.id)].filter(
+      Boolean,
+    ) as string[];
+    startStarting(async () => {
+      try {
+        await onStart(playerUserIds);
+      } catch (e) {
+        log.error("Lobby", "Failed to start", e);
+      }
+    });
   };
 
   const playerCount = others.length + 1;
@@ -76,8 +82,13 @@ export function Lobby({ roomCode, isHost, onStart, categories, selectedCategory,
               }`}
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", stiffness: 450, damping: 28, delay: i * 0.04 }}
-              whileTap={isHost ? { scale: 0.92 } : undefined}
+              transition={{
+                type: "spring",
+                stiffness: 450,
+                damping: 28,
+                delay: i * 0.04,
+              }}
+              {...(isHost && { whileTap: { scale: 0.92 } })}
             >
               {cat}
             </motion.button>

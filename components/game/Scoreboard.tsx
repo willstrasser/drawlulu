@@ -29,11 +29,17 @@ function ScoreList({ scores }: { scores: PlayerScore[] }) {
               : "bg-white/60 border-gray-900/10"
           }`}
           initial={{ opacity: 0, x: -20, rotate: i === 0 ? -2.5 : -1.5 }}
-          animate={{ opacity: 1, x: 0, rotate: 0, scale: i === 0 ? [1, 1.04, 1] : 1 }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            rotate: 0,
+            scale: i === 0 ? [1, 1.04, 1] : 1,
+          }}
           transition={{
             ...SETTLE,
             delay: i * 0.08,
-            scale: i === 0 ? { delay: i * 0.08 + 0.3, duration: 0.4 } : undefined,
+            scale:
+              i === 0 ? { delay: i * 0.08 + 0.3, duration: 0.4 } : undefined,
           }}
         >
           <div className="flex items-center gap-3">
@@ -52,7 +58,9 @@ function ScoreList({ scores }: { scores: PlayerScore[] }) {
             </span>
             <span className="font-medium text-gray-900">{player.username}</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">{player.score}pts</span>
+          <span className="text-xl font-bold text-gray-900">
+            {player.score}pts
+          </span>
         </motion.div>
       ))}
     </div>
@@ -178,7 +186,9 @@ export function Scoreboard({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 pl-2">No correct guesses</p>
+                  <p className="text-sm text-gray-500 pl-2">
+                    No correct guesses
+                  </p>
                 )}
               </motion.div>
             ))}

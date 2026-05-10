@@ -44,7 +44,10 @@ export async function POST() {
   }
 
   if (!game) {
-    return NextResponse.json({ error: "Failed to generate room code" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to generate room code" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ roomCode: game.roomCode });

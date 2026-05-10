@@ -36,7 +36,10 @@ export function withGameContext(policy: GamePolicy, handler: GameRouteHandler) {
     const user = await getUser();
     if (!user) return errorResponse("Unauthorized", 401);
 
-    const [game] = await db.select().from(games).where(eq(games.roomCode, code));
+    const [game] = await db
+      .select()
+      .from(games)
+      .where(eq(games.roomCode, code));
     if (!game) return errorResponse("Game not found", 404);
 
     const isHost = user.userId === game.hostId;
@@ -61,10 +64,7 @@ export function withGameContext(policy: GamePolicy, handler: GameRouteHandler) {
         .select({ userId: prompts.userId })
         .from(prompts)
         .where(
-          and(
-            eq(prompts.roundId, round.id),
-            eq(prompts.userId, user.userId),
-          ),
+          and(eq(prompts.roundId, round.id), eq(prompts.userId, user.userId)),
         )
         .limit(1);
       isPlayer = playerRows.length > 0;

@@ -21,7 +21,6 @@ export function useSession(): UseSessionResult {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => {
@@ -33,8 +32,18 @@ export function useSession(): UseSessionResult {
       .catch(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [tick]);
 
-  return { user, loading, refresh: () => setTick((t) => t + 1) };
+  // setLoading(true) is only valid in a user-initiated handler, not inside
+  // the fetch effect — that would trigger a cascading render the lint rule
+  // (correctly) flags.
+  const refresh = () => {
+    setLoading(true);
+    setTick((t) => t + 1);
+  };
+
+  return { user, loading, refresh };
 }

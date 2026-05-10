@@ -89,7 +89,7 @@ function GameRoom({
     if (user) {
       setMyPresence({
         username: user.username,
-        imageUrl: user.imageUrl,
+        ...(user.imageUrl !== undefined && { imageUrl: user.imageUrl }),
         isReady: false,
         hasSubmittedPrompt: false,
       });

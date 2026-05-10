@@ -6,7 +6,10 @@ export async function GET() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   if (!clientId || !appUrl) {
-    return NextResponse.json({ error: "OAuth not configured" }, { status: 503 });
+    return NextResponse.json(
+      { error: "OAuth not configured" },
+      { status: 503 },
+    );
   }
 
   const state = randomBytes(16).toString("hex");
@@ -19,7 +22,7 @@ export async function GET() {
   });
 
   const response = NextResponse.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+    `https://accounts.google.com/o/oauth2/v2/auth?${params}`,
   );
 
   // Store state in a short-lived cookie for CSRF validation

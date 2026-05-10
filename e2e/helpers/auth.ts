@@ -13,7 +13,10 @@ export async function signInAsHost(page: Page): Promise<void> {
  */
 export async function signInAsPlayer2(page: Page): Promise<void> {
   await page.goto("/");
-  await setGuestSession(page, process.env.TEST_PLAYER2_USERNAME ?? "TestPlayer2");
+  await setGuestSession(
+    page,
+    process.env.TEST_PLAYER2_USERNAME ?? "TestPlayer2",
+  );
 }
 
 /**

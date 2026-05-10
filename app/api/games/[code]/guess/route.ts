@@ -59,7 +59,9 @@ export const POST = withGameContext(
         const allCorrect = await tx
           .select()
           .from(guesses)
-          .where(and(eq(guesses.promptId, promptId), eq(guesses.isCorrect, true)));
+          .where(
+            and(eq(guesses.promptId, promptId), eq(guesses.isCorrect, true)),
+          );
 
         const pts = getGuesserScore(allCorrect.length);
 
@@ -74,6 +76,7 @@ export const POST = withGameContext(
           })
           .returning();
 
+        if (!inserted) throw new Error("Insert returned no row");
         return inserted;
       });
     } else {
@@ -87,6 +90,7 @@ export const POST = withGameContext(
           pointsAwarded: 0,
         })
         .returning();
+      if (!inserted) throw new Error("Insert returned no row");
       guess = inserted;
     }
 

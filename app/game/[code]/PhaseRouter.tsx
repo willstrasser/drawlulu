@@ -124,9 +124,12 @@ export function PhaseRouter({
   }
 
   if (gamePhase === PHASE.REVEALING && prompts) {
+    const idx = currentPromptIndex ?? 0;
+    const currentPrompt = prompts[idx];
+    if (!currentPrompt) return null;
     return (
       <RevealPhase
-        prompt={prompts[currentPromptIndex ?? 0]}
+        prompt={currentPrompt}
         correctGuesses={(currentGuesses ?? []).filter((g) => g.isCorrect)}
       />
     );

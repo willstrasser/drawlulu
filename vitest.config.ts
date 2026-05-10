@@ -3,8 +3,18 @@ import path from "node:path";
 
 export default defineConfig({
   test: {
-    include: ["lib/**/*.test.ts", "hooks/**/*.test.ts", "components/**/*.test.tsx"],
-    exclude: ["node_modules", "e2e", ".next", "playwright-report", "test-results"],
+    include: [
+      "lib/**/*.test.ts",
+      "hooks/**/*.test.ts",
+      "components/**/*.test.tsx",
+    ],
+    exclude: [
+      "node_modules",
+      "e2e",
+      ".next",
+      "playwright-report",
+      "test-results",
+    ],
     environment: "node",
   },
   resolve: {

@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
-import { sessionOptions, type SessionData } from "@/lib/session";
+import { getSession } from "@/lib/iron-session";
 import {
   findUserByOAuth,
   findUserById,
@@ -44,7 +42,9 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) return failureRedirect("token_exchange");
 
-    const { access_token } = (await tokenRes.json()) as { access_token: string };
+    const { access_token } = (await tokenRes.json()) as {
+      access_token: string;
+    };
 
     const userInfoRes = await fetch(
       "https://www.googleapis.com/oauth2/v3/userinfo",
@@ -71,8 +71,7 @@ export async function GET(request: NextRequest) {
 
     const existingOAuth = await findUserByOAuth("google", oauthId);
 
-    const cookieStore = await cookies();
-    const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+    const session = await getSession();
 
     let userId: string;
     if (existingOAuth) {
@@ -81,7 +80,7 @@ export async function GET(request: NextRequest) {
       await linkOAuthToUser(session.userId, {
         provider: "google",
         oauthId,
-        imageUrl,
+        ...(imageUrl !== undefined && { imageUrl }),
       });
       userId = session.userId;
     } else {
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
         provider: "google",
         oauthId,
         username,
-        imageUrl,
+        ...(imageUrl !== undefined && { imageUrl }),
       });
     }
 
@@ -98,7 +97,7 @@ export async function GET(request: NextRequest) {
 
     session.userId = dbUser.id;
     session.username = dbUser.username;
-    session.imageUrl = dbUser.imageUrl ?? undefined;
+    if (dbUser.imageUrl) session.imageUrl = dbUser.imageUrl;
     await session.save();
 
     const response = NextResponse.redirect(`${APP_URL}/`);

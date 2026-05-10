@@ -14,7 +14,7 @@ export type TabooValidationResult = {
 
 export function validateTabooWords(
   prompt: string,
-  tabooWords: string[]
+  tabooWords: string[],
 ): TabooValidationResult {
   const forbiddenWordsUsed: string[] = [];
   let sanitizedPrompt = prompt;

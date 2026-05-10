@@ -2,7 +2,13 @@
 
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { PHASE } from "@/liveblocks.config";
-import type { RoundData, MyAssignment, PromptEntry, PlayerScore, PromptBreakdown } from "@/lib/game-types";
+import type {
+  RoundData,
+  MyAssignment,
+  PromptEntry,
+  PlayerScore,
+  PromptBreakdown,
+} from "@/lib/game-types";
 import { log } from "@/lib/logger";
 
 type UseRoundDataProps = {
@@ -11,7 +17,11 @@ type UseRoundDataProps = {
   setMyPresence: (patch: { hasSubmittedPrompt: boolean }) => void;
 };
 
-export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataProps): RoundData {
+export function useRoundData({
+  gamePhase,
+  code,
+  setMyPresence,
+}: UseRoundDataProps): RoundData {
   const initialRoundData: RoundData = useMemo(
     () => ({
       myAssignment: null,
@@ -58,12 +68,18 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
         })
         .then((data) => {
           if (data.promptId) {
-            setRoundData((prev) => ({ ...prev, myAssignment: data as MyAssignment }));
+            setRoundData((prev) => ({
+              ...prev,
+              myAssignment: data as MyAssignment,
+            }));
           }
         })
         .catch((e) => {
           log.error("useRoundData", "Failed to fetch assignment", e);
-          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load your assignment. Please reload." }));
+          setRoundData((prev) => ({
+            ...prev,
+            fetchError: "Failed to load your assignment. Please reload.",
+          }));
         })
         .finally(() => {
           fetchingAssignmentRef.current = false;
@@ -81,11 +97,17 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
         })
         .then((data) => {
           if (data.prompts)
-            setRoundData((prev) => ({ ...prev, prompts: data.prompts as PromptEntry[] }));
+            setRoundData((prev) => ({
+              ...prev,
+              prompts: data.prompts as PromptEntry[],
+            }));
         })
         .catch((e) => {
           log.error("useRoundData", "Failed to fetch prompts", e);
-          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load game prompts. Please reload." }));
+          setRoundData((prev) => ({
+            ...prev,
+            fetchError: "Failed to load game prompts. Please reload.",
+          }));
         });
     }
   }, [gamePhase, code, roundData.prompts]);
@@ -102,15 +124,23 @@ export function useRoundData({ gamePhase, code, setMyPresence }: UseRoundDataPro
           if (data.roundScores || data.promptBreakdowns) {
             setRoundData((prev) => ({
               ...prev,
-              roundScores: (data.roundScores as PlayerScore[]) ?? prev.roundScores,
-              cumulativeScores: (data.cumulativeScores as PlayerScore[]) ?? prev.cumulativeScores,
-              promptBreakdowns: (data.promptBreakdowns as PromptBreakdown[]) ?? prev.promptBreakdowns,
+              roundScores:
+                (data.roundScores as PlayerScore[]) ?? prev.roundScores,
+              cumulativeScores:
+                (data.cumulativeScores as PlayerScore[]) ??
+                prev.cumulativeScores,
+              promptBreakdowns:
+                (data.promptBreakdowns as PromptBreakdown[]) ??
+                prev.promptBreakdowns,
             }));
           }
         })
         .catch((e) => {
           log.error("useRoundData", "Failed to fetch scores", e);
-          setRoundData((prev) => ({ ...prev, fetchError: "Failed to load scores. Please reload." }));
+          setRoundData((prev) => ({
+            ...prev,
+            fetchError: "Failed to load scores. Please reload.",
+          }));
         });
     }
   }, [gamePhase, code, roundData.roundScores]);

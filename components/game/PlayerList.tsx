@@ -35,7 +35,9 @@ export function PlayerList() {
                   height={24}
                 />
               )}
-              <span className="font-medium">{self.presence.username} (you)</span>
+              <span className="font-medium">
+                {self.presence.username} (you)
+              </span>
               {self.presence.isReady && (
                 <span className="ml-auto text-riso-teal text-xs font-bold">
                   Ready

@@ -64,13 +64,15 @@ function neonHeaders(apiKey: string) {
  */
 async function resolveProjectId(
   nameOrId: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<string> {
   // Fast path: looks like a real project ID already
   if (/^[a-z]+-[a-z]+-[a-z0-9]{8}$/.test(nameOrId)) return nameOrId;
 
   async function findInList(projects: NeonProject[]): Promise<string | null> {
-    const match = projects.find((p) => p.name === nameOrId || p.id === nameOrId);
+    const match = projects.find(
+      (p) => p.name === nameOrId || p.id === nameOrId,
+    );
     return match?.id ?? null;
   }
 
@@ -90,17 +92,15 @@ async function resolveProjectId(
   // If org_id is required (organization account), discover orgs and search each
   const needsOrg =
     !personalRes.ok ||
-    ("message" in personalData &&
-      personalData.message?.includes("org_id"));
+    ("message" in personalData && personalData.message?.includes("org_id"));
 
   if (needsOrg) {
-    const orgsRes = await fetch(
-      `${NEON_API_BASE}/users/me/organizations`,
-      { headers: neonHeaders(apiKey) }
-    );
+    const orgsRes = await fetch(`${NEON_API_BASE}/users/me/organizations`, {
+      headers: neonHeaders(apiKey),
+    });
     if (!orgsRes.ok) {
       throw new Error(
-        `Could not fetch organizations (${orgsRes.status}): ${await orgsRes.text()}`
+        `Could not fetch organizations (${orgsRes.status}): ${await orgsRes.text()}`,
       );
     }
     const orgsData = (await orgsRes.json()) as {
@@ -110,7 +110,7 @@ async function resolveProjectId(
     for (const org of orgsData.organizations ?? []) {
       const orgRes = await fetch(
         `${NEON_API_BASE}/projects?org_id=${org.id}&limit=100`,
-        { headers: neonHeaders(apiKey) }
+        { headers: neonHeaders(apiKey) },
       );
       if (!orgRes.ok) continue;
       const orgData = (await orgRes.json()) as { projects: NeonProject[] };
@@ -122,7 +122,7 @@ async function resolveProjectId(
   throw new Error(
     `Neon project "${nameOrId}" not found.\n` +
       `Set NEON_PROJECT_ID to the project ID from the Neon console URL\n` +
-      `(Projects → <your project> → Settings → General)`
+      `(Projects → <your project> → Settings → General)`,
   );
 }
 
@@ -135,31 +135,28 @@ async function resolveProjectId(
 async function resolveBranchId(
   projectId: string,
   nameOrId: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<string> {
   if (nameOrId.startsWith("br-")) return nameOrId;
 
-  const res = await fetch(
-    `${NEON_API_BASE}/projects/${projectId}/branches`,
-    { headers: neonHeaders(apiKey) }
-  );
+  const res = await fetch(`${NEON_API_BASE}/projects/${projectId}/branches`, {
+    headers: neonHeaders(apiKey),
+  });
   if (!res.ok) {
     throw new Error(
-      `Failed to list branches for project ${projectId} (${res.status}): ${await res.text()}`
+      `Failed to list branches for project ${projectId} (${res.status}): ${await res.text()}`,
     );
   }
   const data = (await res.json()) as { branches: NeonBranch[] };
   const match = data.branches?.find(
-    (b) => b.name === nameOrId || b.id === nameOrId
+    (b) => b.name === nameOrId || b.id === nameOrId,
   );
   if (!match) {
-    const names = data.branches
-      ?.map((b) => `"${b.name}" (${b.id})`)
-      .join(", ");
+    const names = data.branches?.map((b) => `"${b.name}" (${b.id})`).join(", ");
     throw new Error(
       `Neon branch "${nameOrId}" not found in project "${projectId}".\n` +
         `Available branches: ${names || "(none)"}\n` +
-        `Set NEON_PARENT_BRANCH_ID to one of the IDs or names above.`
+        `Set NEON_PARENT_BRANCH_ID to one of the IDs or names above.`,
     );
   }
   return match.id;
@@ -170,7 +167,7 @@ async function waitForOperations(
   projectId: string,
   operationIds: string[],
   apiKey: string,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
 
@@ -178,7 +175,7 @@ async function waitForOperations(
     while (Date.now() < deadline) {
       const res = await fetch(
         `${NEON_API_BASE}/projects/${projectId}/operations/${opId}`,
-        { headers: neonHeaders(apiKey) }
+        { headers: neonHeaders(apiKey) },
       );
       const data = (await res.json()) as NeonOperationResponse;
       const { status } = data.operation;
@@ -204,7 +201,11 @@ export async function createTestBranch(name: string): Promise<{
 
   // Resolve names → IDs
   const projectId = await resolveProjectId(rawProjectId, apiKey);
-  const parentBranchId = await resolveBranchId(projectId, rawParentBranchId, apiKey);
+  const parentBranchId = await resolveBranchId(
+    projectId,
+    rawParentBranchId,
+    apiKey,
+  );
 
   // Auto-expire the branch after 2 h — safety net if globalTeardown never runs
   const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
@@ -226,7 +227,7 @@ export async function createTestBranch(name: string): Promise<{
 
   if (!res.ok) {
     throw new Error(
-      `Neon branch creation failed (${res.status}): ${await res.text()}`
+      `Neon branch creation failed (${res.status}): ${await res.text()}`,
     );
   }
 
@@ -251,11 +252,11 @@ export async function createTestBranch(name: string): Promise<{
     const connRes = await fetch(
       `${NEON_API_BASE}/projects/${projectId}/connection_uri` +
         `?branch_id=${branchId}&role_name=${role}&database_name=${database}`,
-      { headers: neonHeaders(apiKey) }
+      { headers: neonHeaders(apiKey) },
     );
     if (!connRes.ok) {
       throw new Error(
-        `Failed to fetch connection URI (${connRes.status}): ${await connRes.text()}`
+        `Failed to fetch connection URI (${connRes.status}): ${await connRes.text()}`,
       );
     }
     const connData = (await connRes.json()) as { uri: string };
@@ -263,7 +264,9 @@ export async function createTestBranch(name: string): Promise<{
   }
 
   if (!uri) {
-    throw new Error("Could not obtain a connection URI for the new Neon branch");
+    throw new Error(
+      "Could not obtain a connection URI for the new Neon branch",
+    );
   }
 
   const connectionUri = uri.includes("sslmode")
@@ -290,12 +293,12 @@ export async function deleteTestBranch(branchId: string): Promise<void> {
     {
       method: "DELETE",
       headers: neonHeaders(apiKey),
-    }
+    },
   );
 
   if (!res.ok && res.status !== 404) {
     console.error(
-      `Warning: failed to delete Neon branch ${branchId}: ${await res.text()}`
+      `Warning: failed to delete Neon branch ${branchId}: ${await res.text()}`,
     );
   }
 }
@@ -305,10 +308,10 @@ export function neonBranchingEnabled(): boolean {
   const { NEON_API_KEY, NEON_PROJECT_ID, NEON_PARENT_BRANCH_ID } = process.env;
   return Boolean(
     NEON_API_KEY &&
-      !NEON_API_KEY.includes("REPLACE_ME") &&
-      NEON_PROJECT_ID &&
-      !NEON_PROJECT_ID.includes("REPLACE_ME") &&
-      NEON_PARENT_BRANCH_ID &&
-      !NEON_PARENT_BRANCH_ID.includes("REPLACE_ME")
+    !NEON_API_KEY.includes("REPLACE_ME") &&
+    NEON_PROJECT_ID &&
+    !NEON_PROJECT_ID.includes("REPLACE_ME") &&
+    NEON_PARENT_BRANCH_ID &&
+    !NEON_PARENT_BRANCH_ID.includes("REPLACE_ME"),
   );
 }

@@ -32,7 +32,7 @@ export const POST = withGameContext(
     for (const [i, r] of results.entries()) {
       if (r.status === "rejected") {
         log.error("generate", "Image generation failed for prompt", r.reason, {
-          promptId: roundPrompts[i].id,
+          promptId: roundPrompts[i]?.id,
         });
       } else if (r.value !== null) {
         generated.push(r.value);

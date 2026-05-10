@@ -28,13 +28,19 @@ export const GET = withGameContext(
 
     const allPrompts =
       allRoundIds.length > 0
-        ? await db.select().from(prompts).where(inArray(prompts.roundId, allRoundIds))
+        ? await db
+            .select()
+            .from(prompts)
+            .where(inArray(prompts.roundId, allRoundIds))
         : [];
 
     const allPromptIds = allPrompts.map((p) => p.id);
     const allGuesses =
       allPromptIds.length > 0
-        ? await db.select().from(guesses).where(inArray(guesses.promptId, allPromptIds))
+        ? await db
+            .select()
+            .from(guesses)
+            .where(inArray(guesses.promptId, allPromptIds))
         : [];
 
     const guessesByPromptId: GuessesByPromptId = new Map();

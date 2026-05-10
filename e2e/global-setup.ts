@@ -1,4 +1,3 @@
-import type { FullConfig } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 import { seedWordCards, cleanGameData } from "./helpers/db";
@@ -9,7 +8,7 @@ import { seedWordCards, cleanGameData } from "./helpers/db";
  */
 export const BRANCH_ID_FILE = path.resolve(process.cwd(), ".neon-test-branch");
 
-export default async function globalSetup(_config: FullConfig): Promise<void> {
+export default async function globalSetup(): Promise<void> {
   // Reload .env.test so all vars are available (the config process already
   // set most of them, but globalSetup runs in the same process and may need
   // to re-apply overrides after any dotenv chains).
@@ -26,7 +25,9 @@ export default async function globalSetup(_config: FullConfig): Promise<void> {
   ];
   for (const key of required) {
     if (!process.env[key]) {
-      throw new Error(`Missing required env var "${key}" — add it to .env.test`);
+      throw new Error(
+        `Missing required env var "${key}" — add it to .env.test`,
+      );
     }
   }
 

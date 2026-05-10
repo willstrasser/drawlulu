@@ -12,9 +12,13 @@ const NUM_NEW_CARDS = 10;
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server misconfigured" },
+      { status: 500 },
+    );
   }
-  const provided = request.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
+  const provided =
+    request.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
   const providedBuf = Buffer.from(provided.padEnd(cronSecret.length));
   const secretBuf = Buffer.from(cronSecret.padEnd(provided.length));
   const match =
@@ -89,7 +93,11 @@ Rules:
     }
     cards = parsed;
   } catch (error) {
-    log.error("cron/generate-cards", "Failed to parse generated cards JSON", error);
+    log.error(
+      "cron/generate-cards",
+      "Failed to parse generated cards JSON",
+      error,
+    );
     return NextResponse.json(
       { error: "Invalid JSON response from Claude" },
       { status: 500 },

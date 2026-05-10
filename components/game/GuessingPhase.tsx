@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { useStorage, useSelf } from "@/liveblocks.config";
 import { Timer } from "./Timer";
@@ -18,6 +19,27 @@ type GuessingPhaseProps = {
   category: string;
 };
 
+type GuessState = {
+  ok: boolean;
+  isCorrect: boolean;
+  error: string | null;
+};
+
+const INITIAL: GuessState = { ok: false, isCorrect: false, error: null };
+
+function GuessSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
+    >
+      {pending ? "..." : "Guess!"}
+    </button>
+  );
+}
+
 export function GuessingPhase({
   roomCode,
   prompts,
@@ -27,15 +49,6 @@ export function GuessingPhase({
 }: GuessingPhaseProps) {
   const self = useSelf();
   const currentGuesses = useStorage((root) => root.currentGuesses);
-  const [guessText, setGuessText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [hasGuessedCorrectly, setHasGuessedCorrectly] = useState(false);
-
-  // Reset guess state when prompt changes
-  useEffect(() => {
-    setHasGuessedCorrectly(false);
-    setGuessText("");
-  }, [currentPromptIndex]);
 
   if (!prompts || prompts.length === 0) {
     return (
@@ -52,9 +65,59 @@ export function GuessingPhase({
   const currentUserId = self?.id as string;
   const isMyPrompt = currentPrompt.userId === currentUserId;
 
-  const handleGuess = async () => {
-    if (!guessText.trim() || isMyPrompt || hasGuessedCorrectly) return;
-    setSubmitting(true);
+  // `key={currentPromptIndex}` remounts GuessForm on prompt change, which
+  // resets its local `hasGuessedCorrectly` state without an effect-driven
+  // reset.
+  return (
+    <GuessForm
+      key={currentPromptIndex}
+      currentPrompt={currentPrompt}
+      currentPromptIndex={currentPromptIndex}
+      promptsLength={prompts.length}
+      prompts={prompts}
+      currentGuesses={currentGuesses ?? null}
+      currentUserId={currentUserId}
+      isMyPrompt={isMyPrompt}
+      roomCode={roomCode}
+      category={category}
+      onGuessSubmitted={onGuessSubmitted}
+    />
+  );
+}
+
+type GuessFormProps = {
+  currentPrompt: PromptEntry;
+  currentPromptIndex: number;
+  promptsLength: number;
+  prompts: PromptEntry[];
+  currentGuesses: readonly GuessEntry[] | null;
+  currentUserId: string;
+  isMyPrompt: boolean;
+  roomCode: string;
+  category: string;
+  onGuessSubmitted: (guess: GuessEntry) => void;
+};
+
+function GuessForm({
+  currentPrompt,
+  currentPromptIndex,
+  promptsLength,
+  prompts,
+  currentGuesses,
+  currentUserId,
+  isMyPrompt,
+  roomCode,
+  category,
+  onGuessSubmitted,
+}: GuessFormProps) {
+  async function submit(
+    _prev: GuessState,
+    formData: FormData,
+  ): Promise<GuessState> {
+    const guessText = (formData.get("guessText") as string | null)?.trim();
+    if (!guessText || isMyPrompt) {
+      return { ok: false, isCorrect: false, error: null };
+    }
     try {
       const res = await fetch(`/api/games/${roomCode}/guess`, {
         method: "POST",
@@ -65,24 +128,31 @@ export function GuessingPhase({
         }),
       });
       const data = await res.json();
-      if (data.isCorrect) {
-        setHasGuessedCorrectly(true);
+      if (!res.ok) {
+        return {
+          ok: false,
+          isCorrect: false,
+          error: data.error ?? "Failed to submit",
+        };
       }
       onGuessSubmitted({
         userId: currentUserId,
         username: data.username || "You",
-        guessText: guessText.trim(),
+        guessText,
         isCorrect: data.isCorrect,
-        pointsAwarded: data.pointsAwarded || 0,
+        pointsAwarded: data.pointsAwarded ?? 0,
         timestamp: Date.now(),
       });
-      setGuessText("");
+      return { ok: true, isCorrect: data.isCorrect, error: null };
     } catch (e) {
       log.error("GuessingPhase", "Failed to submit guess", e);
-    } finally {
-      setSubmitting(false);
+      return { ok: false, isCorrect: false, error: "Network error" };
     }
-  };
+  }
+
+  const [state, formAction] = useActionState(submit, INITIAL);
+  // Derive UI state from action result — no useState/useEffect needed.
+  const hasGuessedCorrectly = state.ok && state.isCorrect;
 
   return (
     <div className="relative flex flex-col items-center gap-4 sm:gap-6 w-full max-w-2xl">
@@ -95,7 +165,7 @@ export function GuessingPhase({
           </span>
         )}
         <p className="text-gray-600 text-sm mt-2">
-          Image {currentPromptIndex + 1} of {prompts.length} — by{" "}
+          Image {currentPromptIndex + 1} of {promptsLength} — by{" "}
           <span className="font-medium text-gray-900">
             {currentPrompt.username}
           </span>
@@ -148,24 +218,20 @@ export function GuessingPhase({
           <p className="text-riso-teal font-bold">You guessed correctly!</p>
         </motion.div>
       ) : (
-        <div className="flex gap-2 w-full">
+        <form action={formAction} className="flex gap-2 w-full">
           <input
             type="text"
-            value={guessText}
-            onChange={(e) => setGuessText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGuess()}
+            name="guessText"
             placeholder="Type your guess..."
+            required
+            maxLength={200}
             className="flex-1 bg-white/60 border-2 border-gray-900/10 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-riso-teal/50"
           />
-          <button
-            onClick={handleGuess}
-            disabled={!guessText.trim() || submitting}
-            className="px-6 py-3 bg-riso-teal text-white border-2 border-gray-900 rounded-lg font-bold shadow-[4px_4px_0_var(--color-gray-900)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0_var(--color-gray-900)] active:translate-x-1 active:translate-y-1 active:shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed transition-all"
-          >
-            Guess!
-          </button>
-        </div>
+          <GuessSubmitButton />
+        </form>
       )}
+
+      {state.error && <p className="text-riso-red text-sm">{state.error}</p>}
 
       {/* Live guess feed */}
       {currentGuesses && currentGuesses.length > 0 && (
@@ -214,7 +280,7 @@ export function GuessingPhase({
               alt=""
               loading="eager"
             />
-          ) : null
+          ) : null,
         )}
       </div>
     </div>

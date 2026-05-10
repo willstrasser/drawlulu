@@ -26,21 +26,24 @@ export const POST = withGameContext(
     const byId = new Map(playerUsers.map((u) => [u.id, u]));
     const orderedPlayers = playerUserIds
       .map((id) => byId.get(id))
-      .filter((u): u is typeof playerUsers[number] => Boolean(u));
+      .filter((u): u is (typeof playerUsers)[number] => Boolean(u));
 
-    const [{ maxRound }] = await db
+    const [maxRow] = await db
       .select({ maxRound: max(rounds.roundNumber) })
       .from(rounds)
       .where(eq(rounds.gameId, game.id));
 
-    const nextRoundNumber = (maxRound ?? 0) + 1;
+    const nextRoundNumber = (maxRow?.maxRound ?? 0) + 1;
 
     const cards = await getWordCardsFromDB(orderedPlayers.length, category);
+    if (cards.length < orderedPlayers.length) {
+      return errorResponse("Not enough word cards available", 500);
+    }
 
     // Round + prompts must commit atomically. Without this, a failed prompts
     // insert would leave an orphan round visible to the rest of the game.
     const { round, promptEntries } = await db.transaction(async (tx) => {
-      const [round] = await tx
+      const [insertedRound] = await tx
         .insert(rounds)
         .values({
           gameId: game.id,
@@ -48,25 +51,29 @@ export const POST = withGameContext(
           status: "prompting",
         })
         .returning();
+      if (!insertedRound) throw new Error("Failed to create round");
 
       const promptEntries = await tx
         .insert(prompts)
         .values(
-          orderedPlayers.map((player, i) => ({
-            roundId: round.id,
-            userId: player.id,
-            targetWord: cards[i].objective,
-            tabooWords: cards[i].taboos,
-          })),
+          orderedPlayers.map((player, i) => {
+            const card = cards[i]!;
+            return {
+              roundId: insertedRound.id,
+              userId: player.id,
+              targetWord: card.objective,
+              tabooWords: card.taboos,
+            };
+          }),
         )
         .returning();
 
       await tx
         .update(games)
-        .set({ status: "active", currentRoundId: round.id })
+        .set({ status: "active", currentRoundId: insertedRound.id })
         .where(eq(games.id, game.id));
 
-      return { round, promptEntries };
+      return { round: insertedRound, promptEntries };
     });
 
     const assignments: Record<

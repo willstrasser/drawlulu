@@ -13,9 +13,10 @@ export const GET = withGameContext(
       .where(eq(prompts.roundId, round!.id));
 
     const userIds = [...new Set(roundPrompts.map((p) => p.userId))];
-    const userRows = userIds.length > 0
-      ? await db.select().from(users).where(inArray(users.id, userIds))
-      : [];
+    const userRows =
+      userIds.length > 0
+        ? await db.select().from(users).where(inArray(users.id, userIds))
+        : [];
     const userMap = new Map(userRows.map((u) => [u.id, u]));
 
     const promptsWithUsers = roundPrompts.map((p) => {

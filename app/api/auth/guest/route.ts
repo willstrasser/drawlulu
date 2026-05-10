@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getIronSession } from "iron-session";
-import { cookies } from "next/headers";
-import { sessionOptions, type SessionData } from "@/lib/session";
+import { getSession } from "@/lib/iron-session";
 import { upsertUser } from "@/lib/ensure-user";
 import { randomUUID } from "crypto";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -13,7 +11,10 @@ export async function POST(request: Request) {
   const { username } = (await request.json()) as { username?: string };
 
   if (!username || !username.trim()) {
-    return NextResponse.json({ error: "Username is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Username is required" },
+      { status: 400 },
+    );
   }
 
   const trimmed = username.trim().slice(0, 32);
@@ -21,8 +22,7 @@ export async function POST(request: Request) {
 
   await upsertUser(userId, trimmed);
 
-  const cookieStore = await cookies();
-  const session = await getIronSession<SessionData>(cookieStore, sessionOptions);
+  const session = await getSession();
   session.userId = userId;
   session.username = trimmed;
   await session.save();

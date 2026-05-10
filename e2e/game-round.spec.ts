@@ -56,7 +56,6 @@ test.beforeEach(async ({ browser }) => {
   hostPage = await hostCtx.newPage();
   p2Page = await p2Ctx.newPage();
 
-
   // signInAs* navigates to '/', POSTs to /api/auth/guest, reloads, and waits
   // for the username to appear in the nav before returning.
   await Promise.all([signInAsHost(hostPage), signInAsPlayer2(p2Page)]);
@@ -74,7 +73,7 @@ test("full happy-path round: lobby → prompting → generating → guessing →
   // After signInAsHost the page is already at '/'.
   await hostPage.getByRole("button", { name: "Create Game" }).click();
   await hostPage.waitForURL(/\/game\//);
-  const roomCode = hostPage.url().split("/game/")[1];
+  const roomCode = hostPage.url().split("/game/")[1]!;
   expect(roomCode).toMatch(/^[A-Z0-9]{4,8}$/);
 
   // ── LOBBY: player 2 joins ─────────────────────────────────────────────────
@@ -96,7 +95,9 @@ test("full happy-path round: lobby → prompting → generating → guessing →
   // Categories are fetched from /api/categories; wait for the seeded category.
   // With many categories the button may be below the fold — scroll it into view
   // before asserting visibility so the check doesn't fail on a clipped layout.
-  const testCategoryBtn = hostPage.getByRole("button", { name: "Test Category" });
+  const testCategoryBtn = hostPage.getByRole("button", {
+    name: "Test Category",
+  });
   await testCategoryBtn.scrollIntoViewIfNeeded();
   await expect(testCategoryBtn).toBeVisible({ timeout: 10_000 });
   await testCategoryBtn.click();

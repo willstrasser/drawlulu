@@ -75,9 +75,7 @@ function makePrompt(
   };
 }
 
-function buildGuessIndex(
-  guesses: ScoreGuessRow[],
-): GuessesByPromptId {
+function buildGuessIndex(guesses: ScoreGuessRow[]): GuessesByPromptId {
   const map: GuessesByPromptId = new Map();
   for (const g of guesses) {
     const list = map.get(g.promptId) ?? [];
@@ -110,19 +108,22 @@ describe("computeRoundScores", () => {
       userMap,
     );
 
-    expect(scoreMap["a"].score).toBe(50 + 100);
-    expect(scoreMap["b"].score).toBe(50 + 100);
+    expect(scoreMap["a"]!.score).toBe(50 + 100);
+    expect(scoreMap["b"]!.score).toBe(50 + 100);
     expect(breakdowns).toHaveLength(2);
-    expect(breakdowns[0].correctGuesses).toEqual([
+    expect(breakdowns[0]!.correctGuesses).toEqual([
       { username: "Bob", points: 100 },
     ]);
-    expect(breakdowns[0].prompterPoints).toBe(50);
+    expect(breakdowns[0]!.prompterPoints).toBe(50);
   });
 
   it("zeros prompter score when no one guessed correctly", () => {
     const alice = makeUser("a", "Alice");
     const bob = makeUser("b", "Bob");
-    const userMap: UserMap = new Map([["a", alice], ["b", bob]]);
+    const userMap: UserMap = new Map([
+      ["a", alice],
+      ["b", bob],
+    ]);
     const prompts: ScorePromptRow[] = [makePrompt("p1", "a")];
     const guesses: ScoreGuessRow[] = [
       { promptId: "p1", userId: "b", isCorrect: false, pointsAwarded: 0 },
@@ -134,16 +135,19 @@ describe("computeRoundScores", () => {
       userMap,
     );
 
-    expect(scoreMap["a"].score).toBe(0);
-    expect(scoreMap["b"].score).toBe(0);
-    expect(breakdowns[0].prompterPoints).toBe(0);
-    expect(breakdowns[0].correctGuesses).toEqual([]);
+    expect(scoreMap["a"]!.score).toBe(0);
+    expect(scoreMap["b"]!.score).toBe(0);
+    expect(breakdowns[0]!.prompterPoints).toBe(0);
+    expect(breakdowns[0]!.correctGuesses).toEqual([]);
   });
 
   it("applies the taboo penalty per forbidden word used", () => {
     const alice = makeUser("a", "Alice");
     const bob = makeUser("b", "Bob");
-    const userMap: UserMap = new Map([["a", alice], ["b", bob]]);
+    const userMap: UserMap = new Map([
+      ["a", alice],
+      ["b", bob],
+    ]);
     const prompts: ScorePromptRow[] = [
       makePrompt("p1", "a", { forbiddenWordsUsed: ["dragon"] }),
     ];
@@ -157,8 +161,8 @@ describe("computeRoundScores", () => {
       userMap,
     );
 
-    expect(scoreMap["a"].score).toBe(25);
-    expect(scoreMap["b"].score).toBe(100);
+    expect(scoreMap["a"]!.score).toBe(25);
+    expect(scoreMap["b"]!.score).toBe(100);
   });
 
   it("skips prompts whose user is not in the userMap", () => {
@@ -181,7 +185,10 @@ describe("computeCumulativeScores", () => {
   it("sums prompter+guesser points across all rounds", () => {
     const alice = makeUser("a", "Alice");
     const bob = makeUser("b", "Bob");
-    const userMap: UserMap = new Map([["a", alice], ["b", bob]]);
+    const userMap: UserMap = new Map([
+      ["a", alice],
+      ["b", bob],
+    ]);
     const allPrompts: ScorePromptRow[] = [
       makePrompt("r1-p1", "a"),
       makePrompt("r1-p2", "b"),
@@ -203,8 +210,8 @@ describe("computeCumulativeScores", () => {
 
     // Alice: prompter r1 (50) + prompter r2 (50) + guesser r1-p2 (100) + guesser r2-p2 (0) = 200
     // Bob:   prompter r1 (50) + prompter r2 (0)  + guesser r1-p1 (100) + guesser r2-p1 (100) = 250
-    expect(map["a"].score).toBe(200);
-    expect(map["b"].score).toBe(250);
+    expect(map["a"]!.score).toBe(200);
+    expect(map["b"]!.score).toBe(250);
   });
 });
 
