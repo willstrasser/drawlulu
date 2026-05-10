@@ -29,25 +29,25 @@
     "test:db:setup": "tsx scripts/setup-test-branch.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.95.1",
     "@fal-ai/serverless-client": "^0.15.0",
     "@liveblocks/client": "^3.13.5",
     "@liveblocks/node": "^3.13.5",
     "@liveblocks/react": "^3.13.5",
-    "@neondatabase/serverless": "^1.0.2",
+    "@neondatabase/serverless": "^1.1.0",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^2.0.0",
     "@vercel/toolbar": "^0.2.2",
-    "dotenv": "^17.3.1",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",
-    "flags": "^4.0.3",
+    "flags": "^4.0.6",
     "iron-session": "^8.0.4",
-    "motion": "^12.35.0",
+    "motion": "^12.38.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "ws": "^8.19.0",
-    "zod": "^4.3.6"
+    "ws": "^8.20.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
