@@ -35,7 +35,7 @@
     "@liveblocks/node": "^3.13.5",
     "@liveblocks/react": "^3.13.5",
     "@neondatabase/serverless": "^1.0.2",
-    "@vercel/analytics": "^1.6.1",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "@vercel/toolbar": "^0.2.2",
     "dotenv": "^17.3.1",
