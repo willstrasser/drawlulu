@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",
+    "dev:bot": "tsx scripts/dev-bot.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
