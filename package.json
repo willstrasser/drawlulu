@@ -30,7 +30,7 @@
     "test:db:setup": "tsx scripts/setup-test-branch.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.95.2",
     "@fal-ai/serverless-client": "^0.15.0",
     "@liveblocks/client": "^3.13.5",
     "@liveblocks/node": "^3.13.5",
