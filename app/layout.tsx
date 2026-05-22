@@ -5,6 +5,7 @@ import "./globals.css";
 import "@/lib/env"; // validates required env vars at startup
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { BackgroundMusic } from "@/components/ui/BackgroundMusic";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -33,6 +34,7 @@ export default function RootLayout({
           <div className="riso-blob riso-blob--purple" />
         </div>
         {children}
+        <BackgroundMusic />
         {shouldInjectToolbar && <VercelToolbar />}
         <Analytics />
         <SpeedInsights />
