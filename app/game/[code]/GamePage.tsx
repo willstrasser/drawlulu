@@ -152,6 +152,34 @@ function GameRoom({
     }
   }, [isHost, allSubmitted, timerEndsAt, setTimerEndsAt]);
 
+  // Skip timer when every eligible guesser (everyone but the image owner)
+  // has gotten the current image right.
+  const allGuessed = (() => {
+    if (gamePhase !== PHASE.GUESSING) return false;
+    if (!prompts || currentPromptIndex == null) return false;
+    const current = prompts[currentPromptIndex];
+    if (!current) return false;
+    const guesserIds = [self?.id, ...others.map((o) => o.id)].filter(
+      (id): id is string => Boolean(id) && id !== current.userId,
+    );
+    if (guesserIds.length === 0) return false;
+    const correctIds = new Set(
+      (currentGuesses ?? []).filter((g) => g.isCorrect).map((g) => g.userId),
+    );
+    return guesserIds.every((id) => correctIds.has(id));
+  })();
+
+  useEffect(() => {
+    if (
+      isHost &&
+      allGuessed &&
+      timerEndsAt &&
+      timerEndsAt > Date.now() + 500
+    ) {
+      setTimerEndsAt(Date.now());
+    }
+  }, [isHost, allGuessed, timerEndsAt, setTimerEndsAt]);
+
   if (!storageLoaded) {
     return (
       <div className="relative z-10 min-h-screen text-foreground flex items-center justify-center">

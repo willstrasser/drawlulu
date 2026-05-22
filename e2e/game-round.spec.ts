@@ -186,9 +186,12 @@ test("full happy-path round: lobby → prompting → generating → guessing →
       ).not.toBeVisible();
     }
 
-    // Submit guesses; tryGuess skips the owner silently
-    await tryGuess(hostPage, "sun");
-    await tryGuess(p2Page, "moon");
+    // Submit guesses; tryGuess skips the owner silently. Use intentionally-
+    // wrong guesses so the auto-skip-on-all-correct path in GamePage doesn't
+    // race with our manual phase advancement below — this test exercises the
+    // manual DevPanel timer-expiry flow.
+    await tryGuess(hostPage, "definitelywrong");
+    await tryGuess(p2Page, "definitelywrong");
 
     // Advance to the next image / scoreboard via the DevPanel.
     // The button is disabled until timerEndsAt is set (which happens as soon
