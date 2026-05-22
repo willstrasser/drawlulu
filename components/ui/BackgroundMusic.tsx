@@ -114,7 +114,9 @@ export function BackgroundMusic({ children }: { children?: ReactNode }) {
         ref={audioRef}
         src={TRACK_URL}
         loop
-        preload="none"
+        // "metadata" so audio.duration is available up-front for room sync,
+        // without downloading the full track until the user opts in.
+        preload="metadata"
         onPlay={() => setLocalPlaying(true)}
         onPause={() => setLocalPlaying(false)}
         onVolumeChange={(e) => {
