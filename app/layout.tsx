@@ -33,8 +33,7 @@ export default function RootLayout({
           <div className="riso-blob riso-blob--yellow" />
           <div className="riso-blob riso-blob--purple" />
         </div>
-        {children}
-        <BackgroundMusic />
+        <BackgroundMusic>{children}</BackgroundMusic>
         {shouldInjectToolbar && <VercelToolbar />}
         <Analytics />
         <SpeedInsights />

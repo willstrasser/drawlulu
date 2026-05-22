@@ -35,6 +35,10 @@ export type Storage = {
   selectedCategory: string;
   roundNumber: number;
   newGameCode: string;
+  // Wall-clock ms when background music started for the room (null = paused).
+  // All players seek to (now - musicStartedAt) % duration so the track stays
+  // in sync across clients.
+  musicStartedAt: number | null;
 };
 
 export type UserMeta = {

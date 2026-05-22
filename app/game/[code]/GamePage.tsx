@@ -14,6 +14,7 @@ import type { GuessEntry, GamePhase } from "@/liveblocks.config";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { DevPanel } from "@/components/game/DevPanel";
+import { RoomMusicSync } from "@/components/game/RoomMusicSync";
 import { UsernameModal } from "@/components/game/UsernameModal";
 import { RoomErrorBoundary } from "@/components/game/RoomErrorBoundary";
 import Link from "next/link";
@@ -164,6 +165,7 @@ function GameRoom({
 
   return (
     <div className="relative z-10 min-h-screen text-foreground">
+      <RoomMusicSync />
       {showDevPanel && (
         <DevPanel
           code={code}
@@ -273,6 +275,7 @@ function GamePageInner({
           selectedCategory: "",
           roundNumber: 1,
           newGameCode: "",
+          musicStartedAt: null,
         }}
       >
         <GameRoom code={code} showDevPanel={showDevPanel} />

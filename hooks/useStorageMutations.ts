@@ -32,6 +32,13 @@ export function useStorageMutations() {
     storage.set("newGameCode", code);
   }, []);
 
+  const setMusicStartedAt = useMutation(
+    ({ storage }, startedAt: number | null) => {
+      storage.set("musicStartedAt", startedAt);
+    },
+    [],
+  );
+
   // Reading currentGuesses from `storage.get` (mutable) rather than the
   // useStorage projection (readonly) keeps the array spread well-typed —
   // no `as unknown as` ladder needed at call sites.
@@ -52,6 +59,7 @@ export function useStorageMutations() {
     setSelectedCategory,
     setRoundNumber,
     setNewGameCode,
+    setMusicStartedAt,
     addGuess,
     clearGuesses,
   };

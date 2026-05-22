@@ -1,64 +1,123 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 const TRACK_URL =
   "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Bossa%20Antigua.mp3";
 const STORAGE_KEY = "drawlulu:bg-music";
 const VOLUME = 0.25;
 
-export function BackgroundMusic() {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
+type RoomController = {
+  /** True if music is playing room-wide (driven by Liveblocks storage). */
+  playing: boolean;
+  /** Called when the user clicks the toggle while inside a room. */
+  toggle: () => void;
+};
 
-  // Restore the user's last preference on mount. Autoplay is still gated by
-  // a user gesture — if the stored value is "on", we attempt play() but the
-  // browser may reject it until the next click anywhere.
+type MusicCtx = {
+  audioRef: RefObject<HTMLAudioElement | null>;
+  /** Local playback state (used when no room controller is active). */
+  localPlaying: boolean;
+  setLocalPlaying: (next: boolean) => void;
+  roomController: RoomController | null;
+  setRoomController: (c: RoomController | null) => void;
+};
+
+const Ctx = createContext<MusicCtx | null>(null);
+
+export function useBackgroundMusic(): MusicCtx {
+  const v = useContext(Ctx);
+  if (!v)
+    throw new Error("useBackgroundMusic must be used inside <BackgroundMusic>");
+  return v;
+}
+
+/**
+ * Mounts the global audio element + toggle button. The audio element is
+ * persistent across navigations (lives in the root layout), so entering and
+ * leaving a game doesn't restart the track.
+ *
+ * Inside a Liveblocks room, RoomMusicSync registers a controller that takes
+ * over the toggle so play/pause is shared across all players in the room.
+ * Outside a room, the toggle is a purely local preference.
+ */
+export function BackgroundMusic({ children }: { children?: ReactNode }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [localPlaying, setLocalPlaying] = useState(false);
+  const [roomController, setRoomController] = useState<RoomController | null>(
+    null,
+  );
+
+  // Restore the user's last local preference on mount. Autoplay is still
+  // gated by a user gesture — if "on" but the browser blocks play(), we
+  // resume on the next click anywhere.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.localStorage.getItem(STORAGE_KEY) !== "on") return;
     const el = audioRef.current;
     if (!el) return;
     el.play()
-      .then(() => setPlaying(true))
+      .then(() => setLocalPlaying(true))
       .catch(() => {
-        // Autoplay blocked — wait for the next interaction.
         const resume = () => {
           el.play()
-            .then(() => setPlaying(true))
+            .then(() => setLocalPlaying(true))
             .catch(() => {});
-          window.removeEventListener("pointerdown", resume);
         };
         window.addEventListener("pointerdown", resume, { once: true });
       });
   }, []);
 
-  const toggle = () => {
+  const playing = roomController ? roomController.playing : localPlaying;
+
+  const handleClick = useCallback(() => {
+    if (roomController) {
+      roomController.toggle();
+      return;
+    }
     const el = audioRef.current;
     if (!el) return;
-    if (playing) {
+    if (localPlaying) {
       el.pause();
-      setPlaying(false);
+      setLocalPlaying(false);
       window.localStorage.setItem(STORAGE_KEY, "off");
     } else {
       el.play()
         .then(() => {
-          setPlaying(true);
+          setLocalPlaying(true);
           window.localStorage.setItem(STORAGE_KEY, "on");
         })
         .catch(() => {});
     }
-  };
+  }, [roomController, localPlaying]);
 
   return (
-    <>
+    <Ctx.Provider
+      value={{
+        audioRef,
+        localPlaying,
+        setLocalPlaying,
+        roomController,
+        setRoomController,
+      }}
+    >
       <audio
         ref={audioRef}
         src={TRACK_URL}
         loop
         preload="none"
+        onPlay={() => setLocalPlaying(true)}
+        onPause={() => setLocalPlaying(false)}
         onVolumeChange={(e) => {
-          // Pin the volume so external controls can't blast users.
           if (e.currentTarget.volume !== VOLUME) {
             e.currentTarget.volume = VOLUME;
           }
@@ -69,14 +128,15 @@ export function BackgroundMusic() {
       />
       <button
         type="button"
-        onClick={toggle}
+        onClick={handleClick}
         aria-label={playing ? "Mute background music" : "Play background music"}
         aria-pressed={playing}
         className="fixed bottom-4 left-4 z-40 h-9 w-9 rounded-full bg-surface/70 backdrop-blur-sm border-2 border-border/10 text-foreground hover:bg-surface transition-colors flex items-center justify-center"
       >
         {playing ? <SpeakerOn /> : <SpeakerOff />}
       </button>
-    </>
+      {children}
+    </Ctx.Provider>
   );
 }
 
