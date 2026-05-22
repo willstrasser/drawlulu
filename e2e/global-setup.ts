@@ -37,4 +37,25 @@ export default async function globalSetup(): Promise<void> {
   // cards are present and game tables are empty.
   await cleanGameData();
   await seedWordCards();
+
+  // ── Warm up dev-server route compilation ─────────────────────────────────
+  // `next dev` compiles routes on demand, and the first request to each can
+  // take many seconds on CI hardware. Chained cold compiles push the host's
+  // hostId-write effect past when the test starts clicking "Test Category".
+  // Pre-compile every route the happy-path test touches.
+  const base = "http://localhost:3000";
+  const routes = [
+    "/",
+    "/api/auth/me",
+    "/api/categories",
+    "/api/games/WARMUP", // [code] dynamic route; 404 body, but route compiles
+    "/game/WARMUP", // [code] dynamic route
+  ];
+  await Promise.all(
+    routes.map((p) =>
+      fetch(base + p).catch(() => {
+        // Compile-only — ignore non-2xx and network blips.
+      }),
+    ),
+  );
 }
