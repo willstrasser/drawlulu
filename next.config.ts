@@ -5,12 +5,13 @@ const withVercelToolbar = createWithVercelToolbar();
 
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://lh3.googleusercontent.com https://fal.media https://*.fal.ai https://*.fal.media https://placehold.co",
-  "font-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live",
+  "style-src 'self' 'unsafe-inline' https://vercel.live",
+  "img-src 'self' blob: data: https://lh3.googleusercontent.com https://fal.media https://*.fal.ai https://*.fal.media https://placehold.co https://vercel.live https://vercel.com",
+  "font-src 'self' https://vercel.live https://assets.vercel.com",
   "media-src 'self' https://incompetech.com",
-  "connect-src 'self' https://va.vercel-scripts.com https://*.liveblocks.io wss://*.liveblocks.io",
+  "connect-src 'self' https://va.vercel-scripts.com https://*.liveblocks.io wss://*.liveblocks.io https://vercel.live wss://ws-us3.pusher.com",
+  "frame-src https://vercel.live",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
