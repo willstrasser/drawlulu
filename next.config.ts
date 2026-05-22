@@ -9,6 +9,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://lh3.googleusercontent.com https://fal.media https://*.fal.ai https://*.fal.media https://placehold.co",
   "font-src 'self'",
+  "media-src 'self' https://incompetech.com",
   "connect-src 'self' https://va.vercel-scripts.com https://*.liveblocks.io wss://*.liveblocks.io",
   "frame-ancestors 'none'",
   "base-uri 'self'",

@@ -57,7 +57,6 @@ export function BackgroundMusic() {
         src={TRACK_URL}
         loop
         preload="none"
-        crossOrigin="anonymous"
         onVolumeChange={(e) => {
           // Pin the volume so external controls can't blast users.
           if (e.currentTarget.volume !== VOLUME) {
