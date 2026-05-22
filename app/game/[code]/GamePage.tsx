@@ -170,12 +170,7 @@ function GameRoom({
   })();
 
   useEffect(() => {
-    if (
-      isHost &&
-      allGuessed &&
-      timerEndsAt &&
-      timerEndsAt > Date.now() + 500
-    ) {
+    if (isHost && allGuessed && timerEndsAt && timerEndsAt > Date.now() + 500) {
       setTimerEndsAt(Date.now());
     }
   }, [isHost, allGuessed, timerEndsAt, setTimerEndsAt]);
