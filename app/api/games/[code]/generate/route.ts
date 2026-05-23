@@ -9,7 +9,7 @@ import { log } from "@/lib/logger";
 const MOCK_FAL_IMAGE = "https://placehold.co/512x512.png";
 
 export const POST = withGameContext(
-  { requireRound: true },
+  { requireRound: true, requireHost: true },
   async (_request, { round }) => {
     const roundPrompts = await db
       .select()
