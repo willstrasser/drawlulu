@@ -3,7 +3,7 @@
 import { useOthers, useSelf } from "@/liveblocks.config";
 import { PlayerList } from "./PlayerList";
 import { motion } from "motion/react";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { log } from "@/lib/logger";
 import { StampButton } from "@/components/ui/StampButton";
 import { PhaseShell } from "@/components/ui/PhaseShell";
@@ -56,9 +56,7 @@ export function Lobby({
             {roomCode}
           </span>
         </div>
-        <p className="text-gray-600 text-sm mt-2">
-          Share this code with friends to join
-        </p>
+        <CopyInviteLink />
       </div>
 
       <div className="w-full max-w-sm">
@@ -122,5 +120,64 @@ export function Lobby({
         <p className="text-gray-600">Waiting for host to start the game...</p>
       )}
     </PhaseShell>
+  );
+}
+
+function CopyInviteLink() {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    if (typeof window === "undefined") return;
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for non-HTTPS / older browsers: select a temporary input.
+      const input = document.createElement("input");
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        /* swallow — UI will simply not flip to "Copied!" */
+        document.body.removeChild(input);
+        return;
+      }
+      document.body.removeChild(input);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      aria-live="polite"
+      className="mt-2 inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-foreground transition-colors"
+    >
+      <LinkIcon />
+      {copied ? "Copied!" : "Copy invite link"}
+    </button>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
   );
 }
