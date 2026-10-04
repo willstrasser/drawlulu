@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, gt, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { prompts, wordCards } from "@/lib/db/schema";
+import { prompts, rounds, wordCards } from "@/lib/db/schema";
 import { isPlayable } from "@/lib/db/word-cards";
 import { checkCronAuth } from "@/lib/cron-auth";
 import {
@@ -24,7 +24,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * 1. Silence cards played in the last couple of weeks (they come back on
  *    their own when silenced_until passes).
  * 2. Generate new cards from current trends, aimed at categories that are
- *    now short, skipping anything already in the deck.
+ *    now short, skipping anything already in the deck. When nobody has
+ *    played recently and nothing is short, skip generation (and its cost).
  *
  * `?dryRun=1` reports the plan without writing or calling Claude.
  */
@@ -75,7 +76,18 @@ export async function GET(request: Request) {
   const silencedSet = new Set(toSilence);
   const stillPlayable = usage.filter((u) => !silencedSet.has(u.id));
   const playableByCategory = countByCategory(stillPlayable);
-  const plan = planRefill(playableByCategory);
+
+  const [activity] = await db
+    .select({ recentRounds: sql<number>`count(*)::int` })
+    .from(rounds)
+    .where(
+      gt(
+        rounds.createdAt,
+        new Date(now - ROTATION.activityLookbackDays * DAY_MS),
+      ),
+    );
+  const recentRounds = activity?.recentRounds ?? 0;
+  const plan = planRefill(playableByCategory, recentRounds > 0);
 
   const allObjectives = await db
     .select({ objective: wordCards.objective })
@@ -89,10 +101,22 @@ export async function GET(request: Request) {
       .map((u) => `${u.category}: ${u.objective}`),
     silencedUntil,
     playableByCategory: Object.fromEntries(playableByCategory),
+    recentRounds,
     refill: { total: plan.total, deficits: Object.fromEntries(plan.deficits) },
   };
 
   if (dryRun) return NextResponse.json(summary);
+
+  if (plan.total === 0) {
+    log.info(
+      "cron/refresh-cards",
+      "Idle and fully stocked; skipped generation",
+      {
+        silenced: toSilence.length,
+      },
+    );
+    return NextResponse.json({ ...summary, inserted: [], skipped: "idle" });
+  }
 
   let generated;
   try {

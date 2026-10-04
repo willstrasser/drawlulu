@@ -53,14 +53,23 @@ describe("planRefill", () => {
         ["Tech", 15],
         ["Holidays", 10],
       ]),
+      true,
       12,
     );
     expect(Object.fromEntries(deficits)).toEqual({ Music: 7, Holidays: 2 });
     expect(total).toBe(9);
   });
 
-  it("still generates a few cards when nothing is short", () => {
-    expect(planRefill(new Map([["Movies", 30]]), 12).total).toBe(3);
+  it("still generates a few cards when nothing is short but people are playing", () => {
+    expect(planRefill(new Map([["Movies", 30]]), true, 12).total).toBe(3);
+  });
+
+  it("generates nothing when idle and nothing is short", () => {
+    expect(planRefill(new Map([["Movies", 30]]), false, 12).total).toBe(0);
+  });
+
+  it("still fills real shortfalls while idle, without padding", () => {
+    expect(planRefill(new Map([["Music", 11]]), false, 12).total).toBe(1);
   });
 
   it("caps generation per run", () => {
@@ -70,13 +79,14 @@ describe("planRefill", () => {
           ["A", 0],
           ["B", 0],
         ]),
+        true,
         12,
       ).total,
     ).toBe(12);
   });
 
   it("ignores the test category", () => {
-    const { deficits } = planRefill(new Map([["Test Category", 2]]), 12);
+    const { deficits } = planRefill(new Map([["Test Category", 2]]), true, 12);
     expect(deficits.size).toBe(0);
   });
 });

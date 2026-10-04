@@ -10,7 +10,9 @@ export const ROTATION = {
   minPlayablePerCategory: 8,
   /** Categories below this many playable cards get topped up. */
   targetPlayablePerCategory: 12,
-  /** Bounds on cards generated per run. */
+  /** Games played within this window count as recent activity. */
+  activityLookbackDays: 7,
+  /** Bounds on cards generated per run. Only active decks get the minimum. */
   minNewCards: 3,
   maxNewCards: 12,
 } as const;
@@ -56,11 +58,13 @@ export function pickCardsToSilence(
 
 /**
  * How many new cards each category needs to get back to the target, plus the
- * total to generate this run (always at least a few, so the deck stays fresh
- * even when nothing is short).
+ * total to generate this run. While people are playing, always add a few so
+ * the deck stays fresh; while idle, only fill real shortfalls (often zero, so
+ * the run makes no Claude call at all).
  */
 export function planRefill(
   playableByCategory: Map<string, number>,
+  recentlyActive: boolean,
   target: number = ROTATION.targetPlayablePerCategory,
 ): { deficits: Map<string, number>; total: number } {
   const deficits = new Map<string, number>();
@@ -73,10 +77,8 @@ export function planRefill(
       sum += need;
     }
   }
-  const total = Math.min(
-    ROTATION.maxNewCards,
-    Math.max(ROTATION.minNewCards, sum),
-  );
+  const floor = recentlyActive ? ROTATION.minNewCards : 0;
+  const total = Math.min(ROTATION.maxNewCards, Math.max(floor, sum));
   return { deficits, total };
 }
 
