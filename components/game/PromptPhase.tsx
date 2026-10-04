@@ -11,6 +11,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Textarea } from "@/components/ui/Textarea";
 import { PhaseShell, phaseShell } from "@/components/ui/PhaseShell";
 import { log } from "@/lib/logger";
+import { usePromptDraft } from "@/hooks/usePromptDraft";
 
 type PromptPhaseProps = {
   targetWord: string;
@@ -48,6 +49,12 @@ export function PromptPhase({
   hasSubmitted,
   category,
 }: PromptPhaseProps) {
+  const { onDraftChange, markSaved } = usePromptDraft({
+    roomCode,
+    promptId,
+    disabled: hasSubmitted,
+  });
+
   async function submit(
     _prev: SubmitState,
     formData: FormData,
@@ -70,6 +77,7 @@ export function PromptPhase({
           error: data.error ?? "Failed to submit",
         };
       }
+      markSaved(promptText);
       // Notify parent so it can update Liveblocks presence
       // (`hasSubmittedPrompt`). Calling here avoids a setState-in-effect.
       onSubmitted();
@@ -166,7 +174,11 @@ export function PromptPhase({
           maxLength={1000}
           className="w-full"
           rows={3}
+          onChange={(e) => onDraftChange(e.target.value)}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Out of time? We&apos;ll use whatever you&apos;ve written so far.
+        </p>
       </div>
 
       {state.error && <p className="text-danger text-sm">{state.error}</p>}

@@ -6,6 +6,8 @@ import type { GamePhase } from "@/liveblocks.config";
 import type { PromptEntry } from "@/lib/game-types";
 import { log } from "@/lib/logger";
 
+const DRAFT_GRACE_MS = 1500;
+
 type UseGameTimerProps = {
   isHost: boolean;
   code: string;
@@ -54,6 +56,10 @@ export function useGameTimer({
     if (phase === PHASE.PROMPTING) {
       setGamePhase(PHASE.GENERATING);
       setTimerEndsAt(null);
+
+      // Give players' last-second prompt drafts (see usePromptDraft) a moment
+      // to land before generation reads them.
+      await new Promise((r) => setTimeout(r, DRAFT_GRACE_MS));
 
       try {
         const controller = new AbortController();
