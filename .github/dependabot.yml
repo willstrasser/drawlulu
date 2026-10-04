@@ -15,8 +15,15 @@ updates:
     # eslint-config-next compatible with ESLint 10, block major bumps so the
     # tooling group isn't permanently red. Revisit when eslint-config-next
     # publishes a release noting ESLint 10 support.
+    #
+    # TypeScript 7 is blocked by eslint-config-next pulling in
+    # @typescript-eslint/typescript-estree 8.59.x, which fails on TS 7.
+    # Revisit when eslint-config-next ships @typescript-eslint 8.60+.
     ignore:
       - dependency-name: eslint
+        update-types:
+          - version-update:semver-major
+      - dependency-name: typescript
         update-types:
           - version-update:semver-major
     groups:
@@ -47,13 +54,15 @@ updates:
           - eslint
           - eslint-config-prettier
       # Test/format/types toolchain — safe to roll up.
+      # typescript is intentionally excluded: majors are blocked (above) and
+      # we want minors to land as separate PRs so a TS bump never holds up
+      # the rest of the toolchain.
       tooling:
         patterns:
           - vitest
           - "@vitest/*"
           - prettier
           - "@playwright/test"
-          - typescript
           - tsx
       # Catch-all for everything else — patches and minors only, weekly.
       minor-and-patch:
