@@ -100,6 +100,9 @@ export const wordCards = pgTable(
       .notNull()
       .default("system"),
     isActive: boolean("is_active").notNull().default(true),
+    // Temporary benching by the refresh-cards cron for recently played cards.
+    // Unlike isActive (a permanent manual switch), this expires on its own.
+    silencedUntil: timestamp("silenced_until"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [

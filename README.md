@@ -63,7 +63,7 @@ Phase-specific UI lives in `components/game/`. For the deeper map of API routes,
 
 ## Deploy
 
-Hosted on Vercel. CI runs lint / type-check / format / unit on every PR, plus Playwright E2E. `vercel.json` declares a weekly cron hitting `/api/cron/generate-cards` to auto-grow the word-card catalog.
+Hosted on Vercel. CI runs lint / type-check / format / unit on every PR, plus Playwright E2E. `vercel.json` declares a daily cron hitting `/api/cron/refresh-cards`, which temporarily silences recently played word cards and generates fresh ones from current trends (see `lib/card-rotation.ts`).
 
 ## Credits
 
