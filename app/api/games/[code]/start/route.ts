@@ -35,7 +35,18 @@ export const POST = withGameContext(
 
     const nextRoundNumber = (maxRow?.maxRound ?? 0) + 1;
 
-    const cards = await getWordCardsFromDB(orderedPlayers.length, category);
+    // Don't deal a card this game has already played in an earlier round.
+    const playedRows = await db
+      .selectDistinct({ targetWord: prompts.targetWord })
+      .from(prompts)
+      .innerJoin(rounds, eq(prompts.roundId, rounds.id))
+      .where(eq(rounds.gameId, game.id));
+
+    const cards = await getWordCardsFromDB(
+      orderedPlayers.length,
+      category,
+      playedRows.map((r) => r.targetWord),
+    );
     if (cards.length < orderedPlayers.length) {
       return errorResponse("Not enough word cards available", 500);
     }

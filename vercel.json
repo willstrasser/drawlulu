@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/generate-cards",
+      "path": "/api/cron/refresh-cards",
       "schedule": "0 6 * * *"
     }
   ]
