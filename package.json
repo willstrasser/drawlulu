@@ -51,7 +51,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^25",
     "@types/react": "^19",
@@ -61,10 +61,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.8.3",
+    "prettier": "^3.9.9",
     "tailwindcss": "^4",
-    "tsx": "^4.22.3",
+    "tsx": "^4.23.15",
     "typescript": "^6",
-    "vitest": "^4.1.7"
+    "vitest": "^5.0.3"
   }
 }
